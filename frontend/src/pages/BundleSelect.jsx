@@ -81,7 +81,7 @@ export default function BundleSelect() {
                 console.error('Bundle load error:', err);
             }
             const status = err.response?.status;
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+            const apiUrl = (typeof window !== 'undefined' && window.location.hostname === 'localhost') ? '/api' : (import.meta.env.VITE_API_BASE_URL || '/api');
             let message = 'We are temporarily unable to load data packages. Please try again shortly.';
             if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK') {
                 message = `Network error. Please check your connection and try again. (API: ${apiUrl})`;
