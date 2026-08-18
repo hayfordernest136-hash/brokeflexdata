@@ -410,7 +410,7 @@ function buildAdminNotificationEmail(order, event) {
 
     return buildBaseEmail(
         ADMIN_EMAIL,
-        `Admin Alert: Order ${eventLabel} - ${order.reference}`,
+        `Admin Alert: ${eventLabel} - ${order.reference}`,
         'Admin Alert',
         `Order ${eventLabel}`,
         body
