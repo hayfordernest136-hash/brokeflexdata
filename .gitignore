@@ -6,3 +6,5 @@ frontend/.env
 *.log
 logs/
 frontend/dist/
+node_modules/
+package-lock.json
