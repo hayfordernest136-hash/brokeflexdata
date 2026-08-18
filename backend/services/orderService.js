@@ -131,6 +131,10 @@ async function createOrder(network, bundle, phoneNumber, email, contactNumber) {
         logError(`Failed to send order creation notification: ${err.message}`);
     });
 
+    await emailService.sendOrderConfirmation(order).catch(err => {
+        logError(`Failed to send order confirmation email: ${err.message}`);
+    });
+
     return order;
 }
 
@@ -189,6 +193,9 @@ async function processPaymentVerification(paystackReference) {
         await emailService.sendAdminNotification(failedOrder, 'payment_failed').catch(e => {
             logError(`Failed to send admin notification: ${e.message}`);
         });
+        await emailService.sendPaymentFailed(failedOrder).catch(e => {
+            logError(`Failed to send payment failed email: ${e.message}`);
+        });
 
         return {
             order: failedOrder,
@@ -210,6 +217,9 @@ async function processPaymentVerification(paystackReference) {
         await emailService.sendAdminNotification(mismatchOrder, 'payment_failed').catch(e => {
             logError(`Failed to send admin notification: ${e.message}`);
         });
+        await emailService.sendPaymentFailed(mismatchOrder).catch(e => {
+            logError(`Failed to send payment failed email: ${e.message}`);
+        });
 
         throw { status: 400, message: 'Payment amount mismatch. Please contact support.' };
     }
@@ -222,6 +232,17 @@ async function processPaymentVerification(paystackReference) {
     let fulfillmentResult = null;
     if (order.fulfillment_status === 'pending' || order.fulfillment_status === 'processing') {
         fulfillmentResult = await fulfillOrder(updatedOrder);
+    }
+
+    const finalOrderForNotification = fulfillmentResult ? fulfillmentResult.order : updatedOrder;
+    if (fulfillmentResult && fulfillmentResult.fulfillmentStatus === 'delivered') {
+        await emailService.sendPaymentSuccess(finalOrderForNotification).catch(e => {
+            logError(`Failed to send payment success email: ${e.message}`);
+        });
+    } else {
+        await emailService.sendPaymentSuccess(updatedOrder).catch(e => {
+            logError(`Failed to send payment success email: ${e.message}`);
+        });
     }
 
     await Order.auditLog(order.reference, 'payment_status', 'pending', 'successful', 'paystack');
@@ -352,13 +373,20 @@ async function fulfillOrder(order) {
 }
 
 async function sendOrderNotifications(order, fulfillmentStatus) {
-    await emailService.sendOrderConfirmation(order).catch(err => {
-        logError(`Failed to send order confirmation email: ${err.message}`);
-    });
-
-    if (fulfillmentStatus === 'failed') {
+    if (fulfillmentStatus === 'delivered') {
+        await emailService.sendDeliveryComplete(order).catch(err => {
+            logError(`Failed to send delivery complete email: ${err.message}`);
+        });
+    } else if (fulfillmentStatus === 'failed') {
+        await emailService.sendStatusUpdate(order).catch(err => {
+            logError(`Failed to send failure email: ${err.message}`);
+        });
         await emailService.sendAdminNotification(order, 'fulfillment_failed').catch(err => {
             logError(`Failed to send admin notification: ${err.message}`);
+        });
+    } else {
+        await emailService.sendStatusUpdate(order).catch(err => {
+            logError(`Failed to send status update email: ${err.message}`);
         });
     }
 }
