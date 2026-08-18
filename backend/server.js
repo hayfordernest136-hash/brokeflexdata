@@ -77,20 +77,29 @@ app.get('*', (req, res) => {
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-    initializeDatabase()
-        .then(() => {
-            app.listen(PORT, () => {
-                console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
-                console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-                console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-                console.log(`[Server] Database: MySQL connected`);
+    if (process.env.DATABASE_URL) {
+        initializeDatabase()
+            .then(() => {
+                app.listen(PORT, () => {
+                    console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
+                    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+                    console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+                    console.log(`[Server] Database: MySQL connected`);
+                });
+            })
+            .catch(err => {
+                console.error('[Database] Failed to initialize MySQL database:', err.message);
+                console.error('[Database] Ensure DATABASE_URL is set correctly');
+                process.exit(1);
             });
-        })
-        .catch(err => {
-            console.error('[Database] Failed to initialize MySQL database:', err.message);
-            console.error('[Database] Ensure DATABASE_URL is set correctly');
-            process.exit(1);
-        });
+    } else {
+        app.listen(PORT, () => {
+                    console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
+                    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+                    console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+                    console.log(`[Server] Database: skipped (no DATABASE_URL) - serving frontend only`);
+                });
+    }
 }
 
 module.exports = { app };
