@@ -1,0 +1,96 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const path = require('path');
+const { initializeDatabase, testConnection } = require('./db/init');
+const { errorHandler } = require('./middleware/errorHandler');
+const { asyncHandler } = require('./middleware/asyncHandler');
+
+const app = express();
+const PORT = process.env.PORT || 4000;
+
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+const corsOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+const corsOptions = {
+    origin: isDevelopment ? corsOrigin : corsOrigin,
+    credentials: true
+};
+
+if (isDevelopment && process.env.CORS_ORIGINS) {
+    corsOptions.origin = process.env.CORS_ORIGINS.split(',');
+}
+
+app.use(cors(corsOptions));
+
+app.use(morgan(isDevelopment ? 'dev' : 'combined'));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+const bundleRoutes = require('./routes/bundleRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const webhookRoutes = require('./routes/webhookRoutes');
+
+app.use('/api/bundles', bundleRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/webhooks', webhookRoutes);
+
+app.get('/api/health', async (req, res) => {
+    const dbOk = await testConnection();
+    res.json({
+        status: dbOk ? 'ok' : 'degraded',
+        database: dbOk ? 'connected' : 'disconnected',
+        databaseType: 'mysql',
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.get('/api/config', (req, res) => {
+    res.json({
+        paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY || '',
+        currency: 'GHS',
+        siteName: 'Brokeflex Data'
+    });
+});
+
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ status: 'error', message: 'API endpoint not found.' });
+});
+
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendDist));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+});
+
+app.use(errorHandler);
+
+if (process.env.NODE_ENV !== 'test') {
+    initializeDatabase()
+        .then(() => {
+            app.listen(PORT, () => {
+                console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
+                console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+                console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+                console.log(`[Server] Database: MySQL connected`);
+            });
+        })
+        .catch(err => {
+            console.error('[Database] Failed to initialize MySQL database:', err.message);
+            console.error('[Database] Ensure DATABASE_URL is set correctly');
+            process.exit(1);
+        });
+}
+
+module.exports = { app };

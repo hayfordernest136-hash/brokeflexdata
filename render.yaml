@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: brokeflexdata-backend
+    runtime: node
+    build:
+      buildCommand: npm install
+      cwd: backend
+    start:
+      startCommand: npm start
+      cwd: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        description: "MySQL connection string from Railway"
+      - key: FRONTEND_URL
+        value: https://brokeflexdata-frontend.onrender.com
+      - key: DATAMART_API_KEY
+        description: "DataMart API key"
+      - key: PAYSTACK_SECRET_KEY
+        description: "Paystack secret key"
+      - key: PAYSTACK_PUBLIC_KEY
+        description: "Paystack public key"
+      - key: PAYSTACK_WEBHOOK_SECRET
+        description: "Paystack webhook secret"
+      - key: RESEND_API_KEY
+        description: "Resend email API key"
+      - key: JWT_SECRET
+        description: "JWT secret for admin authentication"
+      - key: ADMIN_EMAIL
+        description: "Admin panel email"
+      - key: ADMIN_PASSWORD
+        description: "Admin panel password"
+
+  - type: web
+    name: brokeflexdata-frontend
+    runtime: node
+    build:
+      buildCommand: npm install && npm run build
+      cwd: frontend
+    start:
+      startCommand: npm start
+      cwd: frontend
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://brokeflexdata-backend.onrender.com/api
