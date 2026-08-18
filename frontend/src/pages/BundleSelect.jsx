@@ -73,9 +73,19 @@ export default function BundleSelect() {
             const networkBundles = response.data[networkCode] || [];
             setBundles(networkBundles);
         } catch (err) {
-            setBundlesError(
-                'We are temporarily unable to load data packages. Please try again shortly.'
-            );
+            if (import.meta.env.DEV) {
+                console.error('Bundle load error:', err);
+            }
+            const status = err.response?.status;
+            let message = 'We are temporarily unable to load data packages. Please try again shortly.';
+            if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK') {
+                message = 'Network error. Please check your connection and try again.';
+            } else if (status === 401) {
+                message = 'Authentication error. Please contact support.';
+            } else if (status === 503) {
+                message = 'Service temporarily unavailable. Please try again in a few minutes.';
+            }
+            setBundlesError(message);
             setBundles([]);
         } finally {
             setBundlesLoading(false);
