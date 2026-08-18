@@ -6,6 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node backend/server.js",
+    "prestart": "npm install --prefix frontend && npm run build --prefix frontend",
     "dev": "npm run dev --prefix backend",
     "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
     "lint": "echo \"No linter configured\""
