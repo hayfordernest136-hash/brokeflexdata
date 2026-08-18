@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: brokeflexdata-backend
+    name: brokeflexdata
     runtime: node
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm start
+    rootDir: .
+    buildCommand: npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend
+    startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -13,7 +13,7 @@ services:
       - key: DATABASE_URL
         description: "MySQL connection string from Railway"
       - key: FRONTEND_URL
-        value: https://brokeflexdata-frontend.onrender.com
+        value: https://brokeflexdata.onrender.com
       - key: DATAMART_API_KEY
         description: "DataMart API key"
       - key: PAYSTACK_SECRET_KEY
@@ -21,7 +21,7 @@ services:
       - key: PAYSTACK_PUBLIC_KEY
         description: "Paystack public key"
       - key: PAYSTACK_WEBHOOK_SECRET
-        description: "Paystack webhook secret"
+        description: "Paystack webhook signature secret"
       - key: RESEND_API_KEY
         description: "Resend email API key"
       - key: JWT_SECRET
@@ -30,17 +30,3 @@ services:
         description: "Admin panel email"
       - key: ADMIN_PASSWORD
         description: "Admin panel password"
-
-  - type: web
-    name: brokeflexdata-frontend
-    runtime: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npx serve -s dist -l $PORT
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://brokeflexdata-backend.onrender.com/api
-      - key: FRONTEND_URL
-        value: https://www.brokeflexdata.com
-      - key: PORT
-        value: 3000
