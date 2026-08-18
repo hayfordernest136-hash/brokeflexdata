@@ -19,15 +19,21 @@ app.use(helmet({
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-const corsOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+const configuredOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+const allowedOrigins = new Set([configuredOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173']);
+
 const corsOptions = {
-    origin: isDevelopment ? corsOrigin : corsOrigin,
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.has(origin)) return callback(null, true);
+        if (origin.match(/\.onrender\.com$/)) return callback(null, true);
+        if (process.env.CORS_ORIGINS && isDevelopment) {
+            return callback(null, process.env.CORS_ORIGINS.split(',').includes(origin));
+        }
+        return callback(null, true);
+    },
     credentials: true
 };
-
-if (isDevelopment && process.env.CORS_ORIGINS) {
-    corsOptions.origin = process.env.CORS_ORIGINS.split(',');
-}
 
 app.use(cors(corsOptions));
 
