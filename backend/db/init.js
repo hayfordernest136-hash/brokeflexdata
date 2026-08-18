@@ -26,14 +26,10 @@ if (dbUrl) {
 }
 
 if (!parsedConfig) {
-    throw new Error(
-        'DATABASE_URL environment variable is required. ' +
-        'Format: mysql://user:password@host:port/database. ' +
-        'Get this from Railway MySQL plugin.'
-    );
+    console.warn('[Database] DATABASE_URL not set. Running in frontend-only mode (no DB).');
 }
 
-const config = {
+const pool = parsedConfig ? mysql.createPool({
     host: parsedConfig.host,
     port: parseInt(parsedConfig.port) || 3306,
     user: parsedConfig.user,
@@ -42,19 +38,17 @@ const config = {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-};
+    multipleStatements: true,
+    ssl: (parsedConfig.host !== 'localhost' && parsedConfig.host !== '127.0.0.1') ? { rejectUnauthorized: false } : undefined,
+}) : null;
 
-if (parsedConfig.host !== 'localhost' && parsedConfig.host !== '127.0.0.1') {
-    config.ssl = { rejectUnauthorized: false };
+function requirePool() {
+    if (!pool) throw new Error('Database not configured. DATABASE_URL is missing.');
+    return pool;
 }
 
-const pool = mysql.createPool({
-    ...config,
-    multipleStatements: true,
-});
-
 async function getConnection() {
-    return await pool.getConnection();
+    return await requirePool().getConnection();
 }
 
 async function run(sql, params = []) {
@@ -290,7 +284,7 @@ async function initializeDatabase() {
 }
 
 async function closePool() {
-    await pool.end();
+    if (pool) await pool.end();
 }
 
 module.exports = {
