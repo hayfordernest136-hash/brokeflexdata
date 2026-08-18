@@ -16,6 +16,16 @@ export default defineConfig({
       }
     }
   },
+  preview: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'https://brokeflexdata-backend.onrender.com',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': `${__dirname}/src`
