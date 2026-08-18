@@ -1,5 +1,6 @@
 import { NETWORK_CONFIG } from './NetworkSelector';
 import { formatPrice } from './BundleGrid';
+import { Info } from 'lucide-react';
 
 export default function OrderSummary({ order, onBack, onPay, loading }) {
     const network = NETWORK_CONFIG[order.network] || NETWORK_CONFIG.MTN;
@@ -68,6 +69,15 @@ export default function OrderSummary({ order, onBack, onPay, loading }) {
                             </span>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl text-sm text-text-secondary">
+                <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <p className="leading-relaxed">
+                        <strong className="font-medium text-text-primary">Delivery Notice:</strong> Data is usually delivered within a few moments after a successful payment. However, occasional network or provider delays may cause delivery to take longer than expected. Please do not make another purchase if your data has not arrived immediately. Your order will continue to be processed.
+                    </p>
                 </div>
             </div>
 
