@@ -3,10 +3,8 @@ services:
     name: brokeflexdata-backend
     runtime: node
     rootDir: backend
-    build:
-      buildCommand: npm install
-    start:
-      startCommand: npm start
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -37,10 +35,8 @@ services:
     name: brokeflexdata-frontend
     runtime: node
     rootDir: frontend
-    build:
-      buildCommand: npm install && npm run build
-    start:
-      startCommand: npm start
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: VITE_API_BASE_URL
         value: https://brokeflexdata-backend.onrender.com/api
