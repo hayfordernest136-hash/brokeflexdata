@@ -68,6 +68,10 @@ export default function BundleSelect() {
         setBundlesLoading(true);
         setBundlesError(null);
 
+        if (import.meta.env.DEV) {
+            console.log('Loading bundles for networkCode:', networkCode, 'API base:', import.meta.env.VITE_API_BASE_URL);
+        }
+
         try {
             const response = await fetchBundles(networkCode);
             const networkBundles = response.data[networkCode] || [];
@@ -77,9 +81,10 @@ export default function BundleSelect() {
                 console.error('Bundle load error:', err);
             }
             const status = err.response?.status;
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api';
             let message = 'We are temporarily unable to load data packages. Please try again shortly.';
             if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK') {
-                message = 'Network error. Please check your connection and try again.';
+                message = `Network error. Please check your connection and try again. (API: ${apiUrl})`;
             } else if (status === 401) {
                 message = 'Authentication error. Please contact support.';
             } else if (status === 503) {
