@@ -25,60 +25,43 @@ function generateToken(admin, email) {
 }
 
 async function loginAdmin(email, password) {
-    let admin = await get('SELECT * FROM admin_users WHERE email = ?', [email]);
+    const desiredAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [DESIRED_ADMIN_EMAIL]);
+    const oldAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [OLD_ADMIN_EMAIL]);
 
-    if (!admin) {
-        const altEmail = email === DESIRED_ADMIN_EMAIL ? OLD_ADMIN_EMAIL : DESIRED_ADMIN_EMAIL;
-        const altAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [altEmail]);
-        if (altAdmin) {
-            const valid = await bcrypt.compare(password, altAdmin.password_hash);
-            if (valid) {
-                const bcryptNew = require('bcryptjs');
-                const newHash = await bcryptNew.hash(process.env.ADMIN_PASSWORD || 'Commonsense$5................', 10);
-                if (email === DESIRED_ADMIN_EMAIL && altEmail === OLD_ADMIN_EMAIL) {
-                    await run('UPDATE admin_users SET email = ?, password_hash = ? WHERE id = ?', [
-                        DESIRED_ADMIN_EMAIL, newHash, altAdmin.id
-                    ]);
-                    logInfo(`[Admin] Migrated admin email from ${OLD_ADMIN_EMAIL} to ${DESIRED_ADMIN_EMAIL} at login.`);
-                    altAdmin.email = DESIRED_ADMIN_EMAIL;
-                    altAdmin.password_hash = newHash;
-                }
-                return generateToken(altAdmin, email);
-            }
+    const candidates = [
+        { admin: desiredAdmin, email: DESIRED_ADMIN_EMAIL },
+        { admin: oldAdmin, email: OLD_ADMIN_EMAIL },
+    ].filter(c => c.admin);
+
+    let matched = null;
+    for (const candidate of candidates) {
+        if (await bcrypt.compare(password, candidate.admin.password_hash)) {
+            matched = candidate;
+            break;
         }
+    }
+
+    if (!matched) {
         throw new Error('Invalid credentials');
     }
 
-    let valid = await bcrypt.compare(password, admin.password_hash);
-    if (!valid) {
-        const altEmail = email === DESIRED_ADMIN_EMAIL ? OLD_ADMIN_EMAIL : DESIRED_ADMIN_EMAIL;
-        const altAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [altEmail]);
-        if (altAdmin) {
-            valid = await bcrypt.compare(password, altAdmin.password_hash);
-            if (valid) {
-                const bcryptNew = require('bcryptjs');
-                const newHash = await bcryptNew.hash(process.env.ADMIN_PASSWORD || 'Commonsense$5................', 10);
-                await run('UPDATE admin_users SET email = ?, password_hash = ? WHERE id = ?', [
-                    DESIRED_ADMIN_EMAIL, newHash, altAdmin.id
-                ]);
-                logInfo(`[Admin] Migrated admin from ${altEmail} to ${DESIRED_ADMIN_EMAIL} at login.`);
-                altAdmin.email = DESIRED_ADMIN_EMAIL;
-                return generateToken(altAdmin, DESIRED_ADMIN_EMAIL);
-            }
-        }
-        throw new Error('Invalid credentials');
+    if (matched.email === OLD_ADMIN_EMAIL && desiredAdmin) {
+        await run('DELETE FROM admin_users WHERE id = ? AND email = ?', [
+            desiredAdmin.id, DESIRED_ADMIN_EMAIL
+        ]);
     }
 
-    if (admin.email !== DESIRED_ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    if (matched.email !== DESIRED_ADMIN_EMAIL) {
         const newHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Commonsense$5................', 10);
         await run('UPDATE admin_users SET email = ?, password_hash = ? WHERE id = ?', [
-            DESIRED_ADMIN_EMAIL, newHash, admin.id
+            DESIRED_ADMIN_EMAIL, newHash, matched.admin.id
         ]);
-        logInfo(`[Admin] Migrated admin email from ${admin.email} to ${DESIRED_ADMIN_EMAIL} at login.`);
-        admin.email = DESIRED_ADMIN_EMAIL;
+        logInfo(`[Admin] Migrated admin email from ${matched.email} to ${DESIRED_ADMIN_EMAIL} at login.`);
+        matched.admin.email = DESIRED_ADMIN_EMAIL;
+        matched.admin.password_hash = newHash;
     }
 
-    return generateToken(admin, admin.email);
+    return generateToken(matched.admin, DESIRED_ADMIN_EMAIL);
 }
 
 function adminAuth(req, res, next) {
