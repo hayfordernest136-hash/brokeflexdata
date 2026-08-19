@@ -1,6 +1,9 @@
 const { Order } = require('../models/Order');
+const { ResultCheckerOrder } = require('../models/ResultCheckerOrder');
 const emailService = require('../services/emailService');
 const datamartService = require('../services/datamartService');
+const checkerService = require('../services/checkerService');
+const datamartCheckerService = require('../services/datamartCheckerService');
 const { PAYSTACK_BASE_URL, PAYSTACK_SECRET_KEY } = require('../config/paystack');
 const { EMAIL_FROM, ADMIN_EMAIL } = require('../config/resend');
 const { logInfo, logError } = require('../utils/logger');
@@ -495,6 +498,67 @@ async function verifyPaymentAdmin(req, res) {
     }
 }
 
+async function verifyCheckerPaymentAdmin(req, res) {
+    try {
+        const { id } = req.params;
+        let order;
+
+        if (id.match(/^[0-9]+$/)) {
+            order = await ResultCheckerOrder.getById(id);
+        } else {
+            order = await ResultCheckerOrder.getByReference(id);
+        }
+
+        if (!order) {
+            return res.status(404).json({ status: 'error', message: 'Checker order not found.' });
+        }
+
+        if (!order.payment_reference) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'No payment reference found for this order.',
+            });
+        }
+
+        const axios = require('axios');
+        const verifyResponse = await axios.get(
+            `${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(order.payment_reference)}`,
+            {
+                headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` }
+            }
+        );
+
+        const paymentData = verifyResponse.data.data;
+
+        await Order.recordAuditLog(
+            req.admin.email,
+            'checker_payment_verified_manually',
+            order.reference,
+            `paystackStatus=${paymentData.status}`
+        );
+
+        if (paymentData.status === 'success') {
+            await ResultCheckerOrder.update(order.reference, { payment_status: 'successful' });
+        }
+
+        res.json({
+            status: 'success',
+            data: {
+                paymentReference: order.payment_reference,
+                paystackReference: paymentData.reference,
+                amount: paymentData.amount,
+                currency: paymentData.currency,
+                status: paymentData.status,
+                paidAt: paymentData.paid_at,
+                channel: paymentData.channel,
+            }
+        });
+    } catch (err) {
+        logError(`Admin verifyCheckerPayment error: ${err.message}`);
+        res.status(500).json({ status: 'error', message: 'Failed to verify payment.' });
+    }
+}
+
 async function getCustomers(req, res) {
     try {
         const { search = '', page = '1', limit = '50' } = req.query;
@@ -824,6 +888,300 @@ async function getAuditLogs(req, res) {
     }
 }
 
+/* ==================== CHECKER ADMIN FUNCTIONS ==================== */
+
+function formatCheckerOrderResponse(order) {
+    return {
+        id: order.id,
+        reference: order.reference,
+        checkerType: order.checker_type,
+        phoneNumber: order.phone_number,
+        email: order.email,
+        datamartCost: order.datamart_cost,
+        markupPercentage: order.markup_percentage,
+        sellingPrice: order.selling_price,
+        amount: order.amount,
+        amountPesewas: order.amount_pesewas,
+        paystackFee: order.paystack_fee,
+        paystackAmount: order.paystack_amount,
+        paymentReference: order.payment_reference,
+        paymentStatus: order.payment_status,
+        fulfillmentStatus: order.fulfillment_status,
+        datamartPurchaseId: order.datamart_purchase_id,
+        datamartReference: order.datamart_reference,
+        datamartTransactionId: order.datamart_transaction_id,
+        serialNumber: order.serial_number,
+        pin: order.pin,
+        datamartResponse: order.datamart_response,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at
+    };
+}
+
+async function getCheckerOrders(req, res) {
+    try {
+        const {
+            search = '',
+            checkerType = '',
+            paymentStatus = '',
+            fulfillmentStatus = '',
+            page = '1',
+            limit = '50'
+        } = req.query;
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+        const queryLimit = parseInt(limit);
+
+        const orders = await ResultCheckerOrder.search({
+            search,
+            checkerType: checkerType || undefined,
+            paymentStatus: paymentStatus || undefined,
+            fulfillmentStatus: fulfillmentStatus || undefined,
+            offset,
+            limit: queryLimit,
+        });
+
+        const countParams = {};
+        if (checkerType) countParams.checkerType = checkerType;
+        if (paymentStatus) countParams.paymentStatus = paymentStatus;
+        if (fulfillmentStatus) countParams.fulfillmentStatus = fulfillmentStatus;
+
+        const totalCount = await ResultCheckerOrder.count(countParams);
+        const totalPages = Math.ceil(totalCount / queryLimit);
+
+        await Order.recordAuditLog(
+            req.admin.email,
+            'checker_orders_viewed',
+            null,
+            `page=${page}&limit=${limit}&search=${search || 'none'}`
+        );
+
+        res.json({
+            status: 'success',
+            data: {
+                orders: orders.map(formatCheckerOrderResponse),
+                pagination: {
+                    page: parseInt(page),
+                    limit: queryLimit,
+                    total: totalCount,
+                    totalPages,
+                }
+            }
+        });
+    } catch (err) {
+        logError(`Admin getCheckerOrders error: ${err.message}`);
+        res.status(500).json({ status: 'error', message: 'Failed to fetch checker orders.' });
+    }
+}
+
+async function getCheckerOrder(req, res) {
+    try {
+        const { id } = req.params;
+        let order;
+
+        if (id.match(/^[0-9]+$/)) {
+            order = await ResultCheckerOrder.getById(id);
+        } else {
+            order = await ResultCheckerOrder.getByReference(id);
+        }
+
+        if (!order) {
+            return res.status(404).json({ status: 'error', message: 'Checker order not found.' });
+        }
+
+        const auditTrail = await Order.getAuditTrail(order.reference);
+
+        await Order.recordAuditLog(
+            req.admin.email,
+            'checker_order_viewed',
+            order.reference,
+            null
+        );
+
+        res.json({
+            status: 'success',
+            data: {
+                ...formatCheckerOrderResponse(order),
+                auditTrail: auditTrail,
+            }
+        });
+    } catch (err) {
+        logError(`Admin getCheckerOrder error: ${err.message}`);
+        res.status(500).json({ status: 'error', message: 'Failed to fetch checker order.' });
+    }
+}
+
+async function checkCheckerDatamartStatus(req, res) {
+    try {
+        const { id } = req.params;
+        let order;
+
+        if (id.match(/^[0-9]+$/)) {
+            order = await ResultCheckerOrder.getById(id);
+        } else {
+            order = await ResultCheckerOrder.getByReference(id);
+        }
+
+        if (!order) {
+            return res.status(404).json({ status: 'error', message: 'Checker order not found.' });
+        }
+
+        if (!order.datamart_reference) {
+            return res.json({
+                status: 'success',
+                data: {
+                    message: 'No DataMart reference found for this order.',
+                    order: formatCheckerOrderResponse(order),
+                }
+            });
+        }
+
+        let datamartStatus = null;
+        try {
+            datamartStatus = await checkerService.checkResultCheckerStatus(order.reference);
+        } catch (err) {
+            logError(`DataMart checker status check failed for order ${order.reference}: ${err.message}`);
+        }
+
+        const updatedOrder = await ResultCheckerOrder.getByReference(order.reference);
+
+        await Order.recordAuditLog(
+            req.admin.email,
+            'datamart_checker_status_checked',
+            order.reference,
+            `datamartStatus=${datamartStatus?.status || 'error'}`
+        );
+
+        res.json({
+            status: 'success',
+            data: {
+                datamartStatus,
+                order: formatCheckerOrderResponse(updatedOrder),
+            }
+        });
+    } catch (err) {
+        logError(`Admin checkCheckerDatamartStatus error: ${err.message}`);
+        res.status(500).json({ status: 'error', message: 'Failed to check DataMart status.' });
+    }
+}
+
+async function retryCheckerFulfillment(req, res) {
+    try {
+        const { id } = req.params;
+        let order;
+
+        if (id.match(/^[0-9]+$/)) {
+            order = await ResultCheckerOrder.getById(id);
+        } else {
+            order = await ResultCheckerOrder.getByReference(id);
+        }
+
+        if (!order) {
+            return res.status(404).json({ status: 'error', message: 'Checker order not found.' });
+        }
+
+        if (order.payment_status !== 'successful') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Cannot retry fulfillment. Payment was not successful.',
+                paymentStatus: order.payment_status,
+            });
+        }
+
+        if (order.fulfillment_status !== 'failed' && order.fulfillment_status !== 'pending' && order.fulfillment_status !== 'fulfillment_pending') {
+            return res.status(400).json({
+                status: 'error',
+                message: `Cannot retry fulfillment. Current status is '${order.fulfillment_status}'.`,
+                fulfillmentStatus: order.fulfillment_status,
+            });
+        }
+
+        if (order.fulfillment_status === 'delivered') {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Order has already been successfully fulfilled.',
+            });
+        }
+
+        await ResultCheckerOrder.update(order.reference, { fulfillment_status: 'pending' });
+        await Order.auditLog(
+            order.reference,
+            'fulfillment_status',
+            order.fulfillment_status,
+            'pending',
+            'admin_retry'
+        );
+
+        const result = await checkerService.fulfillCheckerOrder({
+            ...order,
+            fulfillment_status: 'pending'
+        });
+
+        await Order.recordAuditLog(
+            req.admin.email,
+            'checker_fulfillment_retried',
+            order.reference,
+            `result=${result.fulfillmentStatus}`
+        );
+
+        const updatedOrder = await ResultCheckerOrder.getByReference(order.reference);
+        res.json({
+            status: 'success',
+            data: {
+                message: 'Checker fulfillment retry initiated.',
+                order: formatCheckerOrderResponse(updatedOrder),
+                fulfillmentStatus: result.fulfillmentStatus,
+            }
+        });
+    } catch (err) {
+        logError(`Admin retryCheckerFulfillment error: ${err.message}`);
+        res.status(500).json({ status: 'error', message: 'Failed to retry checker fulfillment.' });
+    }
+}
+
+async function getCheckerDashboardStats(req, res) {
+    try {
+        const stats = await ResultCheckerOrder.getDashboardStats();
+
+        await Order.recordAuditLog(
+            req.admin.email,
+            'checker_dashboard_viewed',
+            null,
+            null
+        );
+
+        res.json({
+            status: 'success',
+            data: stats
+        });
+    } catch (err) {
+        logError(`Admin getCheckerDashboardStats error: ${err.message}`);
+        res.status(500).json({ status: 'error', message: 'Failed to fetch checker dashboard stats.' });
+    }
+}
+
+async function getCheckerProductsAdmin(req, res) {
+    try {
+        const products = await checkerService.getCheckerProducts();
+
+        await Order.recordAuditLog(
+            req.admin.email,
+            'checker_products_viewed',
+            null,
+            null
+        );
+
+        res.json({
+            status: 'success',
+            data: products,
+            lastUpdated: new Date().toISOString()
+        });
+    } catch (err) {
+        logError(`Admin getCheckerProductsAdmin error: ${err.message}`);
+        res.status(500).json({ status: 'error', message: 'Failed to fetch checker products.' });
+    }
+}
+
 module.exports = {
     getDashboard,
     getOrders,
@@ -840,5 +1198,13 @@ module.exports = {
     sendTestEmail,
     getSettings,
     getAuditLogs,
+    getCheckerOrders,
+    getCheckerOrder,
+    checkCheckerDatamartStatus,
+    retryCheckerFulfillment,
+    getCheckerDashboardStats,
+    getCheckerProductsAdmin,
+    verifyCheckerPaymentAdmin,
+    formatCheckerOrderResponse,
     formatOrderResponse,
 };

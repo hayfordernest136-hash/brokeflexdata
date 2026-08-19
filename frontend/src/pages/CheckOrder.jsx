@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { checkOrder } from '../services/api';
+import { checkOrder, checkCheckerOrder } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import StatusCard from '../components/StatusCard';
+import CheckerStatusCard from '../components/CheckerStatusCard';
 import Logo from '../components/Logo';
 import { NETWORK_CONFIG } from '../components/NetworkSelector';
 
 export default function CheckOrder() {
     const [reference, setReference] = useState('');
     const [order, setOrder] = useState(null);
+    const [orderType, setOrderType] = useState('bundle');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -30,8 +32,15 @@ export default function CheckOrder() {
 
         setLoading(true);
         try {
-            const response = await checkOrder(cleanRef);
-            setOrder(response.data);
+            try {
+                const response = await checkOrder(cleanRef);
+                setOrder(response.data);
+                setOrderType('bundle');
+            } catch {
+                const checkerResponse = await checkCheckerOrder(cleanRef);
+                setOrder(checkerResponse.data);
+                setOrderType('checker');
+            }
         } catch (err) {
             setError(
                 err.message ||
@@ -107,12 +116,16 @@ export default function CheckOrder() {
 
                 {order && (
                     <div className="mt-8">
-                                <StatusCard
-                                    order={{
-                                        ...order,
-                                        network: NETWORK_CONFIG[order.network]?.label || order.network,
-                                    }}
-                                />
+                        {orderType === 'checker' ? (
+                            <CheckerStatusCard order={order} />
+                        ) : (
+                            <StatusCard
+                                order={{
+                                    ...order,
+                                    network: NETWORK_CONFIG[order.network]?.label || order.network,
+                                }}
+                            />
+                        )}
                     </div>
                 )}
             </div>

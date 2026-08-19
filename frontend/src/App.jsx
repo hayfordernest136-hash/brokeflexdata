@@ -7,6 +7,7 @@ import BundleSelect from './pages/BundleSelect';
 import Checkout from './pages/Checkout';
 import CheckOrder from './pages/CheckOrder';
 import OrderResult from './pages/OrderResult';
+import ResultCheckers from './pages/ResultCheckers';
 
 import { AdminAuthProvider } from './admin/auth/AuthContext';
 import AdminRoute from './admin/auth/AdminRoute';
@@ -34,6 +35,7 @@ function CustomerApp() {
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/check" element={<CheckOrder />} />
                     <Route path="/order/:reference" element={<OrderResult />} />
+                    <Route path="/checkers" element={<ResultCheckers />} />
                 </Routes>
             </main>
             <Footer />

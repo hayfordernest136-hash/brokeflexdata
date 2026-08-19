@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { apiRequest } from '../services/api';
 import {
     ShoppingCart, Users, DollarSign, Bell, TrendingUp, Package,
-    CheckCircle, Clock, XCircle, AlertCircle, RefreshCw, Mail
+    CheckCircle, Clock, XCircle, AlertCircle, RefreshCw, Mail,
+    FileText,
 } from 'lucide-react';
 
 function StatCard({ title, value, icon, subtitle, trend }) {
@@ -98,6 +99,7 @@ function RecentOrder({ order }) {
 
 export default function Dashboard() {
     const [data, setData] = useState(null);
+    const [checkerStats, setCheckerStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -114,8 +116,17 @@ export default function Dashboard() {
         }
     };
 
+    const fetchCheckerStats = async () => {
+        try {
+            const response = await apiRequest('/admin/checkers/stats');
+            setCheckerStats(response.data);
+        } catch {
+        }
+    };
+
     useEffect(() => {
         fetchData();
+        fetchCheckerStats();
     }, []);
 
     if (loading) {
@@ -254,6 +265,9 @@ export default function Dashboard() {
                         <a href="/admin/bundles" className="block py-2 text-admin-text-secondary hover:text-admin-text hover:bg-admin-input px-3 rounded-lg transition-colors">
                             Refresh bundles
                         </a>
+                        <a href="/admin/checkers" className="block py-2 text-admin-text-secondary hover:text-admin-text hover:bg-admin-input px-3 rounded-lg transition-colors">
+                            View checker orders
+                        </a>
                         <a href="/admin/emails" className="block py-2 text-admin-text-secondary hover:text-admin-text hover:bg-admin-input px-3 rounded-lg transition-colors">
                             Email events
                         </a>
@@ -282,6 +296,51 @@ export default function Dashboard() {
                     </div>
                 )}
             </div>
+
+            {checkerStats && (
+                <div className="bg-admin-card border border-admin-border rounded-xl p-6">
+                    <h2 className="text-lg font-semibold text-admin-text mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        Result Checkers Overview
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="text-center">
+                            <p className="text-2xl font-semibold text-admin-text">{checkerStats.totalOrders || 0}</p>
+                            <p className="text-xs text-admin-text-secondary">Total Orders</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-semibold text-admin-text">{checkerStats.completedOrders || 0}</p>
+                            <p className="text-xs text-admin-text-secondary">Completed</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-semibold text-admin-text">{checkerStats.waecOrders || 0}</p>
+                            <p className="text-xs text-admin-text-secondary">WAEC</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-semibold text-admin-text">{checkerStats.beceOrders || 0}</p>
+                            <p className="text-xs text-admin-text-secondary">BECE</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-semibold text-green-400">{(checkerStats.totalMarkup || 0).toFixed(2)}</p>
+                            <p className="text-xs text-admin-text-secondary">Profit (GHC)</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-semibold text-blue-400">{(checkerStats.totalRevenue || 0).toFixed(2)}</p>
+                            <p className="text-xs text-admin-text-secondary">Sales (GHC)</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-semibold text-purple-400">{(checkerStats.totalDatamartCost || 0).toFixed(2)}</p>
+                            <p className="text-xs text-admin-text-secondary">DataMart Cost (GHC)</p>
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-admin-border">
+                        <a href="/admin/checkers" className="text-sm text-brokeflex hover:underline flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            View all Result Checker orders
+                        </a>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

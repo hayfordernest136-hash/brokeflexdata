@@ -83,9 +83,11 @@ const bundleRoutes = require('./routes/bundleRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const checkerRoutes = require('./routes/checkerRoutes');
 
 app.use('/api/bundles', bundleRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/checkers', checkerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/webhooks', webhookRoutes);
 

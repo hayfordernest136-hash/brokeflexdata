@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
-import { checkOrder } from '../services/api';
+import { checkOrder, checkCheckerOrder } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import StatusCard from '../components/StatusCard';
+import CheckerStatusCard from '../components/CheckerStatusCard';
 import Logo from '../components/Logo';
 import { NETWORK_CONFIG } from '../components/NetworkSelector';
 
 export default function OrderResult() {
     const { reference } = useParams();
+    const location = useLocation();
     const [order, setOrder] = useState(null);
+    const [orderType, setOrderType] = useState(location.state?.type || 'bundle');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -22,20 +25,38 @@ export default function OrderResult() {
             }
 
             try {
-                const response = await checkOrder(reference);
-                setOrder(response.data);
+                if (orderType === 'checker') {
+                    const response = await checkCheckerOrder(reference);
+                    setOrder(response.data);
+                } else {
+                    const response = await checkOrder(reference);
+                    setOrder(response.data);
+                }
             } catch (err) {
-                setError(
-                    err.message || 'Unable to fetch order details.'
-                );
-                setOrder(null);
+                if (orderType !== 'checker') {
+                    try {
+                        const checkerResponse = await checkCheckerOrder(reference);
+                        setOrder(checkerResponse.data);
+                        setOrderType('checker');
+                    } catch {
+                        setError(
+                            err.message || 'Unable to fetch order details.'
+                        );
+                        setOrder(null);
+                    }
+                } else {
+                    setError(
+                        err.message || 'Unable to fetch order details.'
+                    );
+                    setOrder(null);
+                }
             } finally {
                 setLoading(false);
             }
         };
 
         fetchOrder();
-    }, [reference]);
+    }, [reference, orderType]);
 
     if (loading) {
         return (
@@ -88,13 +109,17 @@ export default function OrderResult() {
                     </Link>
                 </div>
 
-                <StatusCard
-                    order={{
-                        ...order,
-                        network: NETWORK_CONFIG[order.network]?.label || order.network,
-                    }}
-                    type="result"
-                />
+                {orderType === 'checker' ? (
+                    <CheckerStatusCard order={order} />
+                ) : (
+                    <StatusCard
+                        order={{
+                            ...order,
+                            network: NETWORK_CONFIG[order.network]?.label || order.network,
+                        }}
+                        type="result"
+                    />
+                )}
             </div>
         </div>
     );

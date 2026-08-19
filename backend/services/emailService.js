@@ -586,6 +586,156 @@ async function sendAdminNotification(order, event) {
     }
 }
 
+/* ==================== CHECKER EMAILS ==================== */
+
+function buildCheckerResultEmail(order) {
+    const formattedAmount = formatGhanaCedis(order.amount);
+    const dateTime = formatDateTime(order.created_at);
+    const reference = order.reference;
+    const checkerTypeLabel = order.checker_type === 'WAEC' ? 'WAEC' : order.checker_type === 'BECE' ? 'BECE' : order.checker_type;
+
+    const body = `
+  <p style="margin-top: 0; font-size: 16px; color: #111827;">Hello,</p>
+  <p style="font-size: 16px; color: #374151;">Congratulations! Your result checker has been successfully purchased and is ready for use.</p>
+
+  <div class="highlight" style="background: #dcfce8; border-left-color: #16a34a;">
+    <p><strong>Order Reference:</strong> ${reference}</p>
+    <p style="margin-top: 4px; font-size: 14px; color: #14532d;">Status: Successfully Fulfilled</p>
+  </div>
+
+  ${buildDetailRow('Result Checker Type', checkerTypeLabel)}
+  ${buildDetailRow('Serial Number', `<span style="font-family: monospace; font-weight: bold; letter-spacing: 1px;">${order.serial_number || '—'}</span>`)}
+  ${buildDetailRow('PIN', `<span style="font-family: monospace; font-weight: bold; letter-spacing: 1px;">${order.pin || '—'}</span>`)}
+  ${buildDetailRow('Delivery Number', order.phone_number)}
+  ${buildDetailRow('Amount Paid', formattedAmount)}
+  ${buildDetailRow('Purchase Date', dateTime)}
+
+  <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px;">
+    <div class="detail-row">
+      <span class="label">Payment Status</span>
+      <span class="value">${buildStatusBadge('Paid', '#16a34a')}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Fulfillment Status</span>
+      <span class="value">${buildStatusBadge('Completed', '#16a34a')}</span>
+    </div>
+  </div>
+
+  <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 16px; margin-top: 20px;">
+    <p style="font-size: 14px; color: #92400e; margin: 0 0 8px 0;">
+      <strong>How to use your result checker:</strong>
+    </p>
+    <ul style="font-size: 13px; color: #92400e; margin: 0; padding-left: 20px; line-height: 1.6;">
+      <li>Keep your serial number and PIN safe and confidential.</li>
+      <li>Use them on the official WAEC/BECE result checker portal.</li>
+      <li>Do not share these credentials with anyone.</li>
+    </ul>
+  </div>
+
+  <div style="text-align: center; margin-top: 24px;">
+    <a href="${CHECK_ORDER_URL}" class="btn btn-primary">Track Your Order</a>
+  </div>
+`;
+
+    return buildBaseEmail(
+        order.email,
+        `Result Checker Purchased - ${order.reference}`,
+        'Result Checker Purchased',
+        'Your result checker has been successfully purchased',
+        body
+    );
+}
+
+function buildCheckerAdminNotification(order, event) {
+    const formattedAmount = formatGhanaCedis(order.amount);
+    const eventLabel = event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const checkerTypeLabel = order.checker_type === 'WAEC' ? 'WAEC' : order.checker_type === 'BECE' ? 'BECE' : order.checker_type;
+
+    const body = `
+  <p style="margin-top: 0; font-size: 16px; color: #111827;">Hello Admin,</p>
+  <p style="font-size: 16px; color: #374151;">A result checker event has occurred.</p>
+
+  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+    <p><strong>Event:</strong> ${eventLabel}</p>
+    <p style="margin-top: 4px; font-size: 14px; color: #64748b;"><strong>Time:</strong> ${formatDateTime(new Date().toISOString())}</p>
+  </div>
+
+  ${buildDetailRow('Order Reference', order.reference)}
+  ${buildDetailRow('Checker Type', checkerTypeLabel)}
+  ${buildDetailRow('Customer Email', order.email)}
+  ${buildDetailRow('Phone Number', order.phone_number)}
+  ${buildDetailRow('Amount', formattedAmount)}
+  ${buildDetailRow('Payment Status', order.payment_status)}
+  ${buildDetailRow('Fulfillment Status', order.fulfillment_status)}
+  ${order.datamart_reference ? buildDetailRow('DataMart Reference', order.datamart_reference) : ''}
+  ${order.datamart_purchase_id ? buildDetailRow('DataMart Purchase ID', order.datamart_purchase_id) : ''}
+  ${order.serial_number ? buildDetailRow('Serial Number', order.serial_number) : ''}
+  ${order.pin ? buildDetailRow('PIN', order.pin) : ''}
+  ${buildDetailRow('Created', formatDateTime(order.created_at))}
+  ${buildDetailRow('Updated', formatDateTime(order.updated_at))}
+`;
+
+    return buildBaseEmail(
+        ADMIN_EMAIL,
+        `Admin Alert: ${eventLabel} - ${order.reference}`,
+        'Admin Alert',
+        `Checker Order ${eventLabel}`,
+        body
+    );
+}
+
+async function sendCheckerResultEmail(order) {
+    if (!resend) {
+        logInfo('Resend not configured. Skipping checker result email.');
+        return { skipped: true };
+    }
+
+    try {
+        const email = buildCheckerResultEmail(order);
+        const result = await resend.emails.send(email);
+
+        if (result.error) {
+            logError(`Failed to send checker result email: ${JSON.stringify(result.error)}`);
+            await logEmailEvent(order.reference, order.email, 'checker_result', 'failed', null, JSON.stringify(result.error));
+            return { error: result.error };
+        }
+
+        logInfo(`Checker result email sent to ${maskEmail(order.email)} for order ${order.reference}`);
+        await logEmailEvent(order.reference, order.email, 'checker_result', 'sent', result.data?.id);
+        return result;
+    } catch (err) {
+        logError(`Failed to send checker result email: ${err.message}`);
+        await logEmailEvent(order.reference, order.email, 'checker_result', 'failed', null, err.message);
+        return { error: err.message };
+    }
+}
+
+async function sendCheckerAdminNotification(order, event) {
+    if (!resend) {
+        logInfo('Resend not configured. Skipping checker admin notification.');
+        return { skipped: true };
+    }
+
+    try {
+        const email = buildCheckerAdminNotification(order, event);
+        const result = await resend.emails.send(email);
+
+        if (result.error) {
+            logError(`Failed to send checker admin notification: ${JSON.stringify(result.error)}`);
+            await logEmailEvent(order.reference, ADMIN_EMAIL, `checker_admin_${event}`, 'failed', null, JSON.stringify(result.error));
+            return { error: result.error };
+        }
+
+        logInfo(`Checker admin notification sent for order ${order.reference} event: ${event}`);
+        await logEmailEvent(order.reference, ADMIN_EMAIL, `checker_admin_${event}`, 'sent', result.data?.id);
+        return result;
+    } catch (err) {
+        logError(`Failed to send checker admin notification: ${err.message}`);
+        await logEmailEvent(order.reference, ADMIN_EMAIL, `checker_admin_${event}`, 'failed', null, err.message);
+        return { error: err.message };
+    }
+}
+
 async function sendTestEmail(toEmail, subject, htmlContent) {
     if (!resend) {
         return { error: 'Resend is not configured. Set RESEND_API_KEY in your environment.' };
@@ -622,12 +772,16 @@ module.exports = {
     sendDeliveryComplete,
     sendStatusUpdate,
     sendAdminNotification,
+    sendCheckerResultEmail,
+    sendCheckerAdminNotification,
     buildOrderConfirmationEmail,
     buildPaymentSuccessEmail,
     buildPaymentFailedEmail,
     buildDeliveryCompleteEmail,
     buildStatusUpdateEmail,
     buildAdminNotificationEmail,
+    buildCheckerResultEmail,
+    buildCheckerAdminNotification,
     sendTestEmail,
     formatGhanaCedis,
     formatDateTime

@@ -9,7 +9,8 @@ import {
     Mail,
     Settings,
     LogOut,
-    Menu
+    Menu,
+    FileText,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,6 +18,7 @@ const navItems = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
     { to: '/admin/bundles', icon: Package, label: 'Data Bundles' },
+    { to: '/admin/checkers', icon: FileText, label: 'Result Checkers' },
     { to: '/admin/customers', icon: Users, label: 'Customers' },
     { to: '/admin/payments', icon: CreditCard, label: 'Payments' },
     { to: '/admin/emails', icon: Mail, label: 'Emails' },

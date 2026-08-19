@@ -37,4 +37,12 @@ router.post('/emails/test', adminAuth, adminController.sendTestEmail);
 router.get('/settings', adminAuth, adminController.getSettings);
 router.get('/audit-logs', adminAuth, adminController.getAuditLogs);
 
+router.get('/checkers/stats', adminAuth, adminController.getCheckerDashboardStats);
+router.get('/checkers/products', adminAuth, adminController.getCheckerProductsAdmin);
+router.get('/checkers', adminAuth, adminController.getCheckerOrders);
+router.get('/checkers/:id', adminAuth, adminController.getCheckerOrder);
+router.get('/checkers/:id/payments/verify', adminAuth, adminController.verifyCheckerPaymentAdmin);
+router.post('/checkers/:id/check-datamart', adminAuth, adminController.checkCheckerDatamartStatus);
+router.post('/checkers/:id/retry-fulfillment', adminAuth, adminController.retryCheckerFulfillment);
+
 module.exports = router;

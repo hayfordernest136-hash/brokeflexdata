@@ -44,3 +44,37 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 export { apiRequest, getToken, setToken, clearToken };
+
+export const fetchCheckerOrders = async (params) => {
+    const response = await apiRequest(`/admin/checkers?${params}`);
+    return response.data;
+};
+
+export const fetchCheckerOrder = async (id) => {
+    const response = await apiRequest(`/admin/checkers/${id}`);
+    return response.data;
+};
+
+export const checkCheckerDatamartStatus = async (id) => {
+    const response = await apiRequest(`/admin/checkers/${id}/check-datamart`, {
+        method: 'POST'
+    });
+    return response.data;
+};
+
+export const retryCheckerFulfillment = async (id) => {
+    const response = await apiRequest(`/admin/checkers/${id}/retry-fulfillment`, {
+        method: 'POST'
+    });
+    return response.data;
+};
+
+export const fetchCheckerDashboardStats = async () => {
+    const response = await apiRequest('/admin/checkers/stats');
+    return response.data;
+};
+
+export const fetchCheckerProductsAdmin = async () => {
+    const response = await apiRequest('/admin/checkers/products');
+    return response.data;
+};

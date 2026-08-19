@@ -7,6 +7,7 @@ import ThemeToggle from './ThemeToggle';
 const NAVIGATION = [
     { name: 'Home', to: '/' },
     { name: 'Buy Data', to: '/buy' },
+    { name: 'Result Checkers', to: '/checkers' },
     { name: 'Check Order', to: '/check' },
 ];
 

@@ -56,6 +56,36 @@ export const fetchBundles = async (networkCode = null) => {
     return res.data;
 };
 
+export const fetchCheckerProducts = async () => {
+    const res = await fetchWithRetry(() => api.get('/checkers/products'));
+    return res.data;
+};
+
+export const createCheckerOrder = async (orderData) => {
+    const res = await fetchWithRetry(() => api.post('/checkers/orders', orderData));
+    return res.data;
+};
+
+export const initiateCheckerPayment = async (reference) => {
+    const res = await fetchWithRetry(() => api.post(`/checkers/orders/${reference}/initiate-payment`));
+    return res.data;
+};
+
+export const verifyCheckerPayment = async (reference, paystackReference) => {
+    const res = await fetchWithRetry(() => api.get(`/checkers/orders/${reference}/verify/${paystackReference}`));
+    return res.data;
+};
+
+export const checkCheckerOrder = async (reference) => {
+    const res = await fetchWithRetry(() => api.get(`/checkers/orders/${reference}`));
+    return res.data;
+};
+
+export const checkCheckerDatamartStatus = async (reference) => {
+    const res = await fetchWithRetry(() => api.get(`/checkers/orders/${reference}/status`));
+    return res.data;
+};
+
 export const createOrder = async (orderData) => {
     const res = await fetchWithRetry(() => api.post('/orders', orderData));
     return res.data;

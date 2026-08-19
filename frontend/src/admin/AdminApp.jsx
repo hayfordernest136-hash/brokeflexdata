@@ -11,6 +11,8 @@ import Payments from './pages/Payments';
 import Emails from './pages/Emails';
 import Settings from './pages/Settings';
 import AuditLogs from './pages/AuditLogs';
+import ResultCheckers from './pages/ResultCheckers';
+import CheckerOrderDetail from './pages/CheckerOrderDetail';
 
 function AdminApp() {
     return (
@@ -35,6 +37,8 @@ function AdminApp() {
                     <Route path="emails" element={<Emails />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="audit-logs" element={<AuditLogs />} />
+                    <Route path="checkers" element={<ResultCheckers />} />
+                    <Route path="checkers/:id" element={<CheckerOrderDetail />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/admin/login" replace />} />
             </Routes>

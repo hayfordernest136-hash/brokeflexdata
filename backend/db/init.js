@@ -186,6 +186,41 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE INDEX idx_audit_admin_email ON audit_log(admin_email);
 CREATE INDEX idx_audit_order_ref ON audit_log(order_reference);
 CREATE INDEX idx_audit_action ON audit_log(action);
+
+CREATE TABLE IF NOT EXISTS result_checker_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reference VARCHAR(255) UNIQUE NOT NULL,
+    checker_type VARCHAR(50) NOT NULL,
+    phone_number VARCHAR(50) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    datamart_cost DECIMAL(10,2) NOT NULL,
+    markup_percentage DECIMAL(5,2) DEFAULT 15 NOT NULL,
+    selling_price DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    amount_pesewas INT NOT NULL,
+    paystack_fee DECIMAL(10,2),
+    paystack_amount DECIMAL(10,2),
+    payment_reference VARCHAR(255) UNIQUE,
+    payment_status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+    fulfillment_status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+    datamart_purchase_id VARCHAR(255),
+    datamart_reference VARCHAR(255),
+    datamart_transaction_id VARCHAR(255),
+    serial_number VARCHAR(255),
+    pin VARCHAR(255),
+    datamart_response TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_checker_orders_reference ON result_checker_orders(reference);
+CREATE INDEX idx_checker_orders_payment_reference ON result_checker_orders(payment_reference);
+CREATE INDEX idx_checker_orders_email ON result_checker_orders(email);
+CREATE INDEX idx_checker_orders_checker_type ON result_checker_orders(checker_type);
+CREATE INDEX idx_checker_orders_created_at ON result_checker_orders(created_at);
+CREATE INDEX idx_checker_orders_payment_status ON result_checker_orders(payment_status);
+CREATE INDEX idx_checker_orders_fulfillment_status ON result_checker_orders(fulfillment_status);
+CREATE INDEX idx_checker_orders_datamart_reference ON result_checker_orders(datamart_reference);
 `;
 
 const MIGRATIONS = [

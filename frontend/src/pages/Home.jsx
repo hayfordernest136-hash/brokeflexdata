@@ -25,6 +25,12 @@ export default function Home() {
                                 Buy Data
                             </Link>
                             <Link
+                                to="/checkers"
+                                className="inline-flex items-center justify-center px-8 py-4 border border-border text-text-secondary rounded-xl font-semibold text-lg hover:bg-card-hover transition-colors"
+                            >
+                                Result Checkers
+                            </Link>
+                            <Link
                                 to="/check"
                                 className="inline-flex items-center justify-center px-8 py-4 border border-border text-text-secondary rounded-xl font-semibold text-lg hover:bg-card-hover transition-colors"
                             >
