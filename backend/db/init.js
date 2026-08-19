@@ -230,11 +230,11 @@ async function runMigrations() {
 async function seedAdminUser() {
     const adminEmail = process.env.ADMIN_EMAIL || 'hayfordernest136@gmail.com';
     const existing = await get(
-        `SELECT COUNT(*) as count FROM admin_users WHERE email = ?`,
+        `SELECT * FROM admin_users WHERE email = ?`,
         [adminEmail]
     );
 
-    if (existing.count > 0) {
+    if (existing) {
         return;
     }
 
@@ -242,12 +242,19 @@ async function seedAdminUser() {
     const password = process.env.ADMIN_PASSWORD || 'changeme-admin-password';
     const hash = await bcrypt.hash(password, 10);
 
-    await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
-        adminEmail,
-        hash,
-        'admin'
-    ]);
-    logInfo('[Database] Seeded admin user.');
+    const anyAdmin = await get(`SELECT id, email FROM admin_users LIMIT 1`);
+
+    if (anyAdmin) {
+        await run('UPDATE admin_users SET email = ?, password_hash = ?, role = ? WHERE id = ?', [
+            adminEmail, hash, 'admin', anyAdmin.id
+        ]);
+        logInfo(`[Database] Updated admin email from ${anyAdmin.email} to ${adminEmail}.`);
+    } else {
+        await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
+            adminEmail, hash, 'admin'
+        ]);
+        logInfo('[Database] Seeded admin user.');
+    }
 }
 
 async function testConnection() {
