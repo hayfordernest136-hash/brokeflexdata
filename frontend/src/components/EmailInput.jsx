@@ -16,12 +16,14 @@ function validateEmail(email) {
     return { valid: true, message: '' };
 }
 
-export default function EmailInput({ value, onChange, error, label = 'Email Address', supportingText }) {
+export default function EmailInput({ value, onChange, error, label = 'Email Address', supportingText, showLabel = true }) {
     return (
         <div className="space-y-2">
-            <label className="block text-sm font-medium text-secondary uppercase tracking-wider">
-                {label}
-            </label>
+            {showLabel && (
+                <label className="block text-sm font-medium text-secondary uppercase tracking-wider">
+                    {label}
+                </label>
+            )}
             <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                     <Mail className="w-5 h-5 text-text-tertiary" />

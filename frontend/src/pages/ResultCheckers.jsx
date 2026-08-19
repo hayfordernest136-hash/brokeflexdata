@@ -311,37 +311,38 @@ export default function ResultCheckers() {
                                     </div>
                                 </div>
 
-                                <div className="bg-card border border-border rounded-xl p-6">
-                                    <h2 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
-                                        DELIVERY NUMBER
-                                    </h2>
-                                    <p className="text-sm text-secondary mb-3">
-                                        Enter your phone number. This will be sent to the checker provider.
-                                    </p>
-                                    <PhoneNumberInput
-                                        value={phoneNumber}
-                                        onChange={setPhoneNumber}
-                                        error={phoneError}
-                                        label="Delivery Number"
-                                        showLabel={true}
-                                    />
-                                </div>
+                         <div className="bg-card border border-border rounded-xl p-6">
+                             <h2 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
+                                 CUSTOMER INFORMATION
+                             </h2>
+                             <div className="space-y-4">
+                                 <div>
+                                     <label className="block text-sm font-medium text-text-secondary mb-1">
+                                         Delivery Number
+                                     </label>
+                                     <PhoneNumberInput
+                                         value={phoneNumber}
+                                         onChange={setPhoneNumber}
+                                         error={phoneError}
+                                         showLabel={false}
+                                     />
+                                     <p className="text-xs text-tertiary mt-1">Enter your phone number</p>
+                                 </div>
 
-                                <div className="bg-card border border-border rounded-xl p-6">
-                                    <h2 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
-                                        EMAIL ADDRESS
-                                    </h2>
-                                    <p className="text-sm text-secondary mb-3">
-                                        This email will receive the purchase confirmation and your result checker details (serial number + PIN).
-                                    </p>
-                                    <EmailInput
-                                        value={email}
-                                        onChange={setEmail}
-                                        error={emailError}
-                                        label="Email Address"
-                                        supportingText="We never share your email."
-                                    />
-                                </div>
+                                 <div>
+                                     <label className="block text-sm font-medium text-text-secondary mb-1">
+                                         Email Address
+                                     </label>
+                                     <EmailInput
+                                         value={email}
+                                         onChange={setEmail}
+                                         error={emailError}
+                                         showLabel={false}
+                                     />
+                                     <p className="text-xs text-tertiary mt-1">Enter your email address</p>
+                                 </div>
+                             </div>
+                         </div>
 
                                 {submitError && (
                                     <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm">

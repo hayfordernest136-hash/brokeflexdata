@@ -603,10 +603,11 @@ function buildCheckerResultEmail(order) {
     <p style="margin-top: 4px; font-size: 14px; color: #14532d;">Status: Successfully Fulfilled</p>
   </div>
 
-  ${buildDetailRow('Result Checker Type', checkerTypeLabel)}
+  ${buildDetailRow('Result Checker', checkerTypeLabel)}
   ${buildDetailRow('Serial Number', `<span style="font-family: monospace; font-weight: bold; letter-spacing: 1px;">${order.serial_number || '—'}</span>`)}
   ${buildDetailRow('PIN', `<span style="font-family: monospace; font-weight: bold; letter-spacing: 1px;">${order.pin || '—'}</span>`)}
   ${buildDetailRow('Delivery Number', order.phone_number)}
+  ${buildDetailRow('Order Reference', reference)}
   ${buildDetailRow('Amount Paid', formattedAmount)}
   ${buildDetailRow('Purchase Date', dateTime)}
 
