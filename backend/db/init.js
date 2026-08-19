@@ -237,11 +237,30 @@ async function seedAdminUser() {
     const password = process.env.ADMIN_PASSWORD || 'changeme-admin-password';
     const hash = await bcrypt.hash(password, 10);
 
-    await run('DELETE FROM admin_users');
-    await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
-        adminEmail, hash, 'admin'
-    ]);
-    logInfo(`[Database] Admin user reset to ${adminEmail} with fresh password.`);
+    const desiredAdmin = await get(`SELECT id FROM admin_users WHERE email = ?`, [adminEmail]);
+    if (desiredAdmin) {
+        await run('UPDATE admin_users SET email = ?, password_hash = ?, role = ? WHERE id = ?', [
+            adminEmail, hash, 'admin', desiredAdmin.id
+        ]);
+        logInfo(`[Database] Admin credentials updated for ${adminEmail}.`);
+        return;
+    }
+
+    await run(`DELETE FROM admin_users WHERE email = ?`, [adminEmail]);
+
+    const anyAdmin = await get(`SELECT id, email FROM admin_users LIMIT 1`);
+
+    if (anyAdmin) {
+        await run('UPDATE admin_users SET email = ?, password_hash = ?, role = ? WHERE id = ?', [
+            adminEmail, hash, 'admin', anyAdmin.id
+        ]);
+        logInfo(`[Database] Migrated admin from ${anyAdmin.email} to ${adminEmail}.`);
+    } else {
+        await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
+            adminEmail, hash, 'admin'
+        ]);
+        logInfo('[Database] Seeded admin user.');
+    }
 }
 
 async function migrateAdminCredentials() {
@@ -250,7 +269,7 @@ async function migrateAdminCredentials() {
         ? 'hayfordernest136@gmail.com'
         : rawEmail;
 
-    const currentPassword = process.env.ADMIN_PASSWORD || 'Commonsense$5................';
+    const currentPassword = process.env.ADMIN_PASSWORD || 'changeme-admin-password';
 
     const bcrypt = require('bcryptjs');
     const hash = await bcrypt.hash(currentPassword, 10);
