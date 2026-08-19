@@ -112,10 +112,25 @@ app.use('/api/*', (req, res) => {
 });
 
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
-app.use(express.static(frontendDist));
+app.use(express.static(frontendDist, {
+    maxAge: '1y',
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+    }
+}));
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendDist, 'index.html'));
+    res.sendFile(path.join(frontendDist, 'index.html'), {
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+    });
+});
+
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'admin.html'), {
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+    });
 });
 
 app.use(errorHandler);
