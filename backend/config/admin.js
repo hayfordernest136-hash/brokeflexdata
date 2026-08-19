@@ -10,6 +10,7 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
 const DESIRED_ADMIN_EMAIL = 'hayfordernest136@gmail.com';
 const OLD_ADMIN_EMAIL = 'admin@brokeflexdata.com';
+const MIGRATION_PASSWORD = 'changeme-admin-password';
 
 function generateToken(admin, email) {
     const token = jwt.sign(
@@ -28,30 +29,21 @@ async function loginAdmin(email, password) {
     const desiredAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [DESIRED_ADMIN_EMAIL]);
     const oldAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [OLD_ADMIN_EMAIL]);
 
-    logInfo(`[Admin login] desiredAdmin exists: ${!!desiredAdmin}, oldAdmin exists: ${!!oldAdmin}`);
-    if (desiredAdmin) {
-        logInfo(`[Admin login] desiredAdmin password_hash starts with: ${desiredAdmin.password_hash?.substring(0, 10)}`);
-    }
-    if (oldAdmin) {
-        logInfo(`[Admin login] oldAdmin password_hash starts with: ${oldAdmin.password_hash?.substring(0, 10)}`);
-    }
-
+    let matched = null;
     const candidates = [
         { admin: desiredAdmin, email: DESIRED_ADMIN_EMAIL },
         { admin: oldAdmin, email: OLD_ADMIN_EMAIL },
     ].filter(c => c.admin);
 
-    let matched = null;
     for (const candidate of candidates) {
         try {
             const isMatch = await bcrypt.compare(password, candidate.admin.password_hash);
-            logInfo(`[Admin login] bcrypt.compare for ${candidate.email}: ${isMatch}`);
             if (isMatch) {
                 matched = candidate;
                 break;
             }
         } catch (e) {
-            logError(`[Admin login] bcrypt error for ${candidate.email}: ${e.message}`);
+            logError(`bcrypt.compare error for ${candidate.email}: ${e.message}`);
         }
     }
 
@@ -66,7 +58,7 @@ async function loginAdmin(email, password) {
     }
 
     if (matched.email !== DESIRED_ADMIN_EMAIL) {
-        const newHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Commonsense$5................', 10);
+        const newHash = await bcrypt.hash(MIGRATION_PASSWORD, 10);
         await run('UPDATE admin_users SET email = ?, password_hash = ? WHERE id = ?', [
             DESIRED_ADMIN_EMAIL, newHash, matched.admin.id
         ]);
