@@ -21,10 +21,11 @@ if (!isDatabaseConfigured) {
     const BACKEND_API_URL = process.env.BACKEND_API_URL || 'https://brokeflexdata-backend.onrender.com';
     console.warn(`[Proxy] Frontend-only mode. Proxying /api requests to ${BACKEND_API_URL}`);
 
-    function createProxyMiddleware(target) {
+    function createProxyMiddleware(target, includePrefix = false) {
         const targetUrl = new URL(target);
         return function (req, res) {
-            const parsedUrl = new URL(req.url, target);
+            const path = includePrefix ? req.originalUrl : req.url;
+            const parsedUrl = new URL(path, target);
             const options = {
                 hostname: targetUrl.hostname,
                 port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
@@ -47,7 +48,7 @@ if (!isDatabaseConfigured) {
         };
     }
 
-    app.use('/api', createProxyMiddleware(BACKEND_API_URL));
+    app.use('/api', createProxyMiddleware(BACKEND_API_URL, true));
 }
 
 app.use(helmet({
