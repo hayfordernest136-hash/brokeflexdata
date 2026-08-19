@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AuthContext';
 import {
     LayoutDashboard,
@@ -23,7 +23,7 @@ const navItems = [
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
-export default function AdminLayout({ children }) {
+export default function AdminLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { admin, logout } = useAdminAuth();
 
@@ -106,7 +106,7 @@ export default function AdminLayout({ children }) {
                 </header>
 
                 <main className="flex-1 p-6 overflow-y-auto">
-                    {children}
+                    <Outlet />
                 </main>
             </div>
         </div>
