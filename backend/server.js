@@ -108,18 +108,18 @@ app.get('/api/config', (req, res) => {
 });
 
 app.get('/api/debug-admin', (req, res) => {
-    if (process.env.DEBUG_KEY !== 'brokeflex-debug-12345') {
+    if (req.headers['x-debug-key'] !== 'brokeflex-debug-12345') {
         return res.status(403).json({ status: 'error', message: 'Forbidden' });
     }
     const { get } = require('./db/init');
-    const bcrypt = require('bcryptjs');
-    get('SELECT id, email, role, created_at FROM admin_users WHERE email = ? OR email = ? ORDER BY id DESC LIMIT 5', ['hayfordernest136@gmail.com', 'admin@brokeflexdata.com'])
+    get('SELECT id, email, role, created_at FROM admin_users ORDER BY id DESC LIMIT 5')
         .then(admins => {
             const password = process.env.ADMIN_PASSWORD;
             res.json({
                 admins: admins || [],
                 adminPasswordEnvSet: password !== undefined,
                 adminPasswordLength: password ? password.length : 0,
+                adminPasswordPreview: password ? password.substring(0, 5) + '...' : null,
             });
         })
         .catch(err => res.status(500).json({ status: 'error', message: err.message }));
