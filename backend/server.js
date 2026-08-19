@@ -6,12 +6,49 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 const { initializeDatabase, testConnection } = require('./db/init');
 const { errorHandler } = require('./middleware/errorHandler');
 const { asyncHandler } = require('./middleware/asyncHandler');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+const isDatabaseConfigured = !!process.env.DATABASE_URL;
+
+if (!isDatabaseConfigured) {
+    const BACKEND_API_URL = process.env.BACKEND_API_URL || 'https://brokeflexdata-backend.onrender.com';
+    console.warn(`[Proxy] Frontend-only mode. Proxying /api requests to ${BACKEND_API_URL}`);
+
+    function createProxyMiddleware(target) {
+        const targetUrl = new URL(target);
+        return function (req, res) {
+            const parsedUrl = new URL(req.url, target);
+            const options = {
+                hostname: targetUrl.hostname,
+                port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
+                path: parsedUrl.pathname + parsedUrl.search,
+                method: req.method,
+                headers: { ...req.headers, host: targetUrl.host },
+            };
+
+            const lib = targetUrl.protocol === 'https:' ? https : http;
+            const proxyReq = lib.request(options, (proxyRes) => {
+                res.writeHead(proxyRes.statusCode, proxyRes.headers);
+                proxyRes.pipe(res);
+            });
+
+            proxyReq.on('error', () => {
+                res.status(502).json({ status: 'error', message: 'Backend service unavailable.' });
+            });
+
+            req.pipe(proxyReq);
+        };
+    }
+
+    app.use('/api', createProxyMiddleware(BACKEND_API_URL));
+}
 
 app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' }
