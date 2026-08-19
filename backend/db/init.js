@@ -228,9 +228,10 @@ async function runMigrations() {
 }
 
 async function seedAdminUser() {
+    const adminEmail = process.env.ADMIN_EMAIL || 'hayfordernest136@gmail.com';
     const existing = await get(
         `SELECT COUNT(*) as count FROM admin_users WHERE email = ?`,
-        [process.env.ADMIN_EMAIL || 'admin@brokeflexdata.com']
+        [adminEmail]
     );
 
     if (existing.count > 0) {
@@ -242,7 +243,7 @@ async function seedAdminUser() {
     const hash = await bcrypt.hash(password, 10);
 
     await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
-        process.env.ADMIN_EMAIL || 'admin@brokeflexdata.com',
+        adminEmail,
         hash,
         'admin'
     ]);

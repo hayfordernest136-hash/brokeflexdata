@@ -9,5 +9,5 @@ if (!RESEND_API_KEY) {
 module.exports = {
     API_KEY: RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@brokeflexdata.com',
-    ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@brokeflexdata.com'
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'hayfordernest136@gmail.com'
 };

@@ -29,6 +29,6 @@ services:
       - key: JWT_SECRET
         description: "JWT secret for admin authentication"
       - key: ADMIN_EMAIL
-        description: "Admin panel email"
+        value: hayfordernest136@gmail.com
       - key: ADMIN_PASSWORD
         description: "Admin panel password"
