@@ -2,72 +2,43 @@ require('dotenv').config();
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { get, run } = require('../db/init');
+const { get } = require('../db/init');
 const { logInfo, logError } = require('../utils/logger');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'brokeflex-admin-secret-change-me';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
-const DESIRED_ADMIN_EMAIL = 'hayfordernest136@gmail.com';
-const OLD_ADMIN_EMAIL = 'admin@brokeflexdata.com';
-const MIGRATION_PASSWORD = 'changeme-admin-password';
+async function loginAdmin(email, password) {
+    const admin = await get('SELECT * FROM admin_users WHERE email = ?', [email]);
 
-function generateToken(admin, email) {
+    if (!admin) {
+        throw new Error('Invalid credentials');
+    }
+
+    const valid = await bcrypt.compare(password, admin.password_hash);
+
+    if (!valid) {
+        throw new Error('Invalid credentials');
+    }
+
     const token = jwt.sign(
-        { id: admin.id, email: email, role: admin.role },
+        {
+            id: admin.id,
+            email: admin.email,
+            role: admin.role,
+        },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
     );
 
     return {
         token,
-        admin: { id: admin.id, email: email, role: admin.role },
+        admin: {
+            id: admin.id,
+            email: admin.email,
+            role: admin.role,
+        },
     };
-}
-
-async function loginAdmin(email, password) {
-    const desiredAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [DESIRED_ADMIN_EMAIL]);
-    const oldAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [OLD_ADMIN_EMAIL]);
-
-    let matched = null;
-    const candidates = [
-        { admin: desiredAdmin, email: DESIRED_ADMIN_EMAIL },
-        { admin: oldAdmin, email: OLD_ADMIN_EMAIL },
-    ].filter(c => c.admin);
-
-    for (const candidate of candidates) {
-        try {
-            const isMatch = await bcrypt.compare(password, candidate.admin.password_hash);
-            if (isMatch) {
-                matched = candidate;
-                break;
-            }
-        } catch (e) {
-            logError(`bcrypt.compare error for ${candidate.email}: ${e.message}`);
-        }
-    }
-
-    if (!matched) {
-        throw new Error('Invalid credentials');
-    }
-
-    if (matched.email === OLD_ADMIN_EMAIL && desiredAdmin) {
-        await run('DELETE FROM admin_users WHERE id = ? AND email = ?', [
-            desiredAdmin.id, DESIRED_ADMIN_EMAIL
-        ]);
-    }
-
-    if (matched.email !== DESIRED_ADMIN_EMAIL) {
-        const newHash = await bcrypt.hash(MIGRATION_PASSWORD, 10);
-        await run('UPDATE admin_users SET email = ?, password_hash = ? WHERE id = ?', [
-            DESIRED_ADMIN_EMAIL, newHash, matched.admin.id
-        ]);
-        logInfo(`[Admin] Migrated admin email from ${matched.email} to ${DESIRED_ADMIN_EMAIL} at login.`);
-        matched.admin.email = DESIRED_ADMIN_EMAIL;
-        matched.admin.password_hash = newHash;
-    }
-
-    return generateToken(matched.admin, DESIRED_ADMIN_EMAIL);
 }
 
 function adminAuth(req, res, next) {

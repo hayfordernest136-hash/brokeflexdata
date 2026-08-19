@@ -232,32 +232,16 @@ async function seedAdminUser() {
     const adminEmail = rawEmail === 'admin@brokeflexdata.com'
         ? 'hayfordernest136@gmail.com'
         : rawEmail;
-    const existing = await get(
-        `SELECT * FROM admin_users WHERE email = ?`,
-        [adminEmail]
-    );
-
-    if (existing) {
-        return;
-    }
 
     const bcrypt = require('bcryptjs');
-    const password = process.env.ADMIN_PASSWORD || 'Commonsense$5................';
+    const password = process.env.ADMIN_PASSWORD || 'changeme-admin-password';
     const hash = await bcrypt.hash(password, 10);
 
-    const anyAdmin = await get(`SELECT id, email FROM admin_users LIMIT 1`);
-
-    if (anyAdmin) {
-        await run('UPDATE admin_users SET email = ?, password_hash = ?, role = ? WHERE id = ?', [
-            adminEmail, hash, 'admin', anyAdmin.id
-        ]);
-        logInfo(`[Database] Updated admin email from ${anyAdmin.email} to ${adminEmail}.`);
-    } else {
-        await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
-            adminEmail, hash, 'admin'
-        ]);
-        logInfo('[Database] Seeded admin user.');
-    }
+    await run('DELETE FROM admin_users');
+    await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
+        adminEmail, hash, 'admin'
+    ]);
+    logInfo(`[Database] Admin user reset to ${adminEmail} with fresh password.`);
 }
 
 async function migrateAdminCredentials() {
