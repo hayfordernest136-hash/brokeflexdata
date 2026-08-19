@@ -228,7 +228,10 @@ async function runMigrations() {
 }
 
 async function seedAdminUser() {
-    const adminEmail = process.env.ADMIN_EMAIL || 'hayfordernest136@gmail.com';
+    const rawEmail = process.env.ADMIN_EMAIL || 'hayfordernest136@gmail.com';
+    const adminEmail = rawEmail === 'admin@brokeflexdata.com'
+        ? 'hayfordernest136@gmail.com'
+        : rawEmail;
     const existing = await get(
         `SELECT * FROM admin_users WHERE email = ?`,
         [adminEmail]
