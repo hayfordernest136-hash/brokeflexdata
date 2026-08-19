@@ -5,8 +5,8 @@ const { run } = require('../db/init');
 
 const resend = API_KEY ? new Resend(API_KEY) : null;
 
-const SITE_URL = process.env.FRONTEND_URL || 'https://brokeflexdata-frontend.onrender.com';
-const CHECK_ORDER_URL = `${SITE_URL}/check-order`;
+const SITE_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const CHECK_ORDER_URL = `${SITE_URL}/check`;
 
 async function logEmailEvent(orderReference, recipientEmail, emailType, status, resendId, error) {
     try {

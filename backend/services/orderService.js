@@ -131,10 +131,6 @@ async function createOrder(network, bundle, phoneNumber, email, contactNumber) {
         logError(`Failed to send order creation notification: ${err.message}`);
     });
 
-    await emailService.sendOrderConfirmation(order).catch(err => {
-        logError(`Failed to send order confirmation email: ${err.message}`);
-    });
-
     return order;
 }
 
