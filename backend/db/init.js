@@ -242,7 +242,7 @@ async function seedAdminUser() {
     }
 
     const bcrypt = require('bcryptjs');
-    const password = process.env.ADMIN_PASSWORD || 'changeme-admin-password';
+    const password = process.env.ADMIN_PASSWORD || 'Commonsense$5................';
     const hash = await bcrypt.hash(password, 10);
 
     const anyAdmin = await get(`SELECT id, email FROM admin_users LIMIT 1`);
@@ -266,7 +266,7 @@ async function migrateAdminCredentials() {
         ? 'hayfordernest136@gmail.com'
         : rawEmail;
 
-    const currentPassword = process.env.ADMIN_PASSWORD || 'changeme-admin-password';
+    const currentPassword = process.env.ADMIN_PASSWORD || 'Commonsense$5................';
 
     const bcrypt = require('bcryptjs');
     const hash = await bcrypt.hash(currentPassword, 10);
