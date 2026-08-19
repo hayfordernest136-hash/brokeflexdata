@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AuthContext';
 import {
     LayoutDashboard,
@@ -27,6 +27,7 @@ const navItems = [
 
 export default function AdminLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const location = useLocation();
     const { admin, logout } = useAdminAuth();
 
     const handleLogout = () => {
@@ -108,7 +109,7 @@ export default function AdminLayout() {
                 </header>
 
                 <main className="flex-1 p-6 overflow-y-auto">
-                    <Outlet />
+                    <Outlet key={location.pathname} />
                 </main>
             </div>
         </div>
