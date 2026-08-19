@@ -8,7 +8,7 @@ const morgan = require('morgan');
 const path = require('path');
 const https = require('https');
 const http = require('http');
-const { initializeDatabase, testConnection } = require('./db/init');
+const { initializeDatabase, testConnection, migrateAdminCredentials } = require('./db/init');
 const { errorHandler } = require('./middleware/errorHandler');
 const { asyncHandler } = require('./middleware/asyncHandler');
 
@@ -123,7 +123,8 @@ app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test') {
     if (process.env.DATABASE_URL) {
         initializeDatabase()
-            .then(() => {
+            .then(async () => {
+                await migrateAdminCredentials();
                 app.listen(PORT, () => {
                     console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
                     console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);

@@ -260,6 +260,36 @@ async function seedAdminUser() {
     }
 }
 
+async function migrateAdminCredentials() {
+    const rawEmail = process.env.ADMIN_EMAIL || 'hayfordernest136@gmail.com';
+    const adminEmail = rawEmail === 'admin@brokeflexdata.com'
+        ? 'hayfordernest136@gmail.com'
+        : rawEmail;
+
+    const currentPassword = process.env.ADMIN_PASSWORD || 'changeme-admin-password';
+
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash(currentPassword, 10);
+
+    const existing = await get('SELECT * FROM admin_users WHERE email = ?', [adminEmail]);
+    if (existing) {
+        return;
+    }
+
+    const anyAdmin = await get('SELECT id, email FROM admin_users LIMIT 1');
+    if (anyAdmin) {
+        await run('UPDATE admin_users SET email = ?, password_hash = ?, role = ? WHERE id = ?', [
+            adminEmail, hash, 'admin', anyAdmin.id
+        ]);
+        logInfo(`[Database] Migrated admin email from ${anyAdmin.email} to ${adminEmail}.`);
+    } else {
+        await run('INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)', [
+            adminEmail, hash, 'admin'
+        ]);
+        logInfo('[Database] Seeded admin user.');
+    }
+}
+
 async function testConnection() {
     try {
         const conn = await getConnection();
@@ -308,4 +338,5 @@ module.exports = {
     closePool,
     getConnection,
     testConnection,
+    migrateAdminCredentials,
 };
