@@ -21,7 +21,7 @@ async function login(req, res) {
             }
         });
     } catch (err) {
-        logError(`Admin login failed: ${err.message}`);
+        logError(`Admin login failed for ${email}: ${err.message}`);
         res.status(401).json({ status: 'error', message: 'Invalid credentials.' });
     }
 }

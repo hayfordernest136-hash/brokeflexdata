@@ -28,6 +28,14 @@ async function loginAdmin(email, password) {
     const desiredAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [DESIRED_ADMIN_EMAIL]);
     const oldAdmin = await get('SELECT * FROM admin_users WHERE email = ?', [OLD_ADMIN_EMAIL]);
 
+    logInfo(`[Admin login] desiredAdmin exists: ${!!desiredAdmin}, oldAdmin exists: ${!!oldAdmin}`);
+    if (desiredAdmin) {
+        logInfo(`[Admin login] desiredAdmin password_hash starts with: ${desiredAdmin.password_hash?.substring(0, 10)}`);
+    }
+    if (oldAdmin) {
+        logInfo(`[Admin login] oldAdmin password_hash starts with: ${oldAdmin.password_hash?.substring(0, 10)}`);
+    }
+
     const candidates = [
         { admin: desiredAdmin, email: DESIRED_ADMIN_EMAIL },
         { admin: oldAdmin, email: OLD_ADMIN_EMAIL },
@@ -35,9 +43,15 @@ async function loginAdmin(email, password) {
 
     let matched = null;
     for (const candidate of candidates) {
-        if (await bcrypt.compare(password, candidate.admin.password_hash)) {
-            matched = candidate;
-            break;
+        try {
+            const isMatch = await bcrypt.compare(password, candidate.admin.password_hash);
+            logInfo(`[Admin login] bcrypt.compare for ${candidate.email}: ${isMatch}`);
+            if (isMatch) {
+                matched = candidate;
+                break;
+            }
+        } catch (e) {
+            logError(`[Admin login] bcrypt error for ${candidate.email}: ${e.message}`);
         }
     }
 
