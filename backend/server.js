@@ -129,6 +129,12 @@ app.get('/admin.html', (req, res) => {
     });
 });
 
+app.get('/admin/*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'admin.html'), {
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+    });
+});
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(frontendDist, 'index.html'), {
         headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
