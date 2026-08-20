@@ -203,9 +203,9 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     title="Total Revenue"
-                    value={'GHC ' + (stats.totalRevenue || 0).toFixed(2)}
+                    value={'GHC ' + (Number(stats.totalRevenue) || 0).toFixed(2)}
                     subtitle={stats.thisMonthOrders > 0
-                        ? 'This month: GHC ' + stats.thisMonthRevenue.toFixed(2)
+                        ? 'This month: GHC ' + (Number(stats.thisMonthRevenue) || 0).toFixed(2)
                         : undefined}
                     icon={<DollarSign className="w-5 h-5 text-blue-400" />}
                 />
@@ -321,15 +321,15 @@ export default function Dashboard() {
                             <p className="text-xs text-admin-text-secondary">BECE</p>
                         </div>
                         <div className="text-center">
-                            <p className="text-2xl font-semibold text-green-400">{(checkerStats.totalMarkup || 0).toFixed(2)}</p>
+                            <p className="text-2xl font-semibold text-green-400">{(Number(checkerStats.totalMarkup) || 0).toFixed(2)}</p>
                             <p className="text-xs text-admin-text-secondary">Profit (GHC)</p>
                         </div>
                         <div className="text-center">
-                            <p className="text-2xl font-semibold text-blue-400">{(checkerStats.totalRevenue || 0).toFixed(2)}</p>
+                            <p className="text-2xl font-semibold text-blue-400">{(Number(checkerStats.totalRevenue) || 0).toFixed(2)}</p>
                             <p className="text-xs text-admin-text-secondary">Sales (GHC)</p>
                         </div>
                         <div className="text-center">
-                            <p className="text-2xl font-semibold text-purple-400">{(checkerStats.totalDatamartCost || 0).toFixed(2)}</p>
+                            <p className="text-2xl font-semibold text-purple-400">{(Number(checkerStats.totalDatamartCost) || 0).toFixed(2)}</p>
                             <p className="text-xs text-admin-text-secondary">DataMart Cost (GHC)</p>
                         </div>
                     </div>

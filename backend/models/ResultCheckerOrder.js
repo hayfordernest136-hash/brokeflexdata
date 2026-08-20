@@ -140,11 +140,11 @@ async function getCheckerDashboardStats() {
 
     stats.totalOrders = (await get('SELECT COUNT(*) as count FROM result_checker_orders')).count;
 
-    stats.totalRevenue = (await get('SELECT COALESCE(SUM(amount), 0) as total FROM result_checker_orders WHERE payment_status = ?', ['successful'])).total;
+    stats.totalRevenue = parseFloat((await get('SELECT COALESCE(SUM(amount), 0) as total FROM result_checker_orders WHERE payment_status = ?', ['successful'])).total);
 
-    stats.totalDatamartCost = (await get('SELECT COALESCE(SUM(datamart_cost), 0) as total FROM result_checker_orders WHERE payment_status = ?', ['successful'])).total;
+    stats.totalDatamartCost = parseFloat((await get('SELECT COALESCE(SUM(datamart_cost), 0) as total FROM result_checker_orders WHERE payment_status = ?', ['successful'])).total);
 
-    stats.totalMarkup = (await get('SELECT COALESCE(SUM(selling_price - datamart_cost), 0) as total FROM result_checker_orders WHERE payment_status = ?', ['successful'])).total;
+    stats.totalMarkup = parseFloat((await get('SELECT COALESCE(SUM(selling_price - datamart_cost), 0) as total FROM result_checker_orders WHERE payment_status = ?', ['successful'])).total);
 
     stats.waecOrders = (await get('SELECT COUNT(*) as count FROM result_checker_orders WHERE checker_type = ?', ['WAEC'])).count;
     stats.beceOrders = (await get('SELECT COUNT(*) as count FROM result_checker_orders WHERE checker_type = ?', ['BECE'])).count;

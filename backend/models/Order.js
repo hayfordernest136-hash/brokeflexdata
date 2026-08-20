@@ -139,7 +139,7 @@ async function getDashboardStats() {
     const stats = {};
 
     stats.totalOrders = (await get('SELECT COUNT(*) as count FROM orders')).count;
-    stats.totalRevenue = (await get('SELECT COALESCE(SUM(amount), 0) as total FROM orders WHERE payment_status = ?', ['successful'])).total;
+    stats.totalRevenue = parseFloat((await get('SELECT COALESCE(SUM(amount), 0) as total FROM orders WHERE payment_status = ?', ['successful'])).total);
 
     stats.pendingOrders = (await get('SELECT COUNT(*) as count FROM orders WHERE payment_status = ? AND fulfillment_status = ?', ['pending', 'pending'])).count;
     stats.processingOrders = (await get('SELECT COUNT(*) as count FROM orders WHERE fulfillment_status = ?', ['processing'])).count;
@@ -155,8 +155,8 @@ async function getDashboardStats() {
     const monthStartStr = monthStart.toISOString().slice(0, 19).replace('T', ' ');
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    stats.thisMonthRevenue = (await get(
-        'SELECT COALESCE(SUM(amount), 0) as total FROM orders WHERE payment_status = ? AND created_at >= ?',
+    stats.thisMonthRevenue = parseFloat((await get(
+        'SELECT COALESCE(SUM(amount), 0) as total FROM orders WHERE payment_status = ? AND created_at >= ?'
         ['successful', monthStartStr]
     )).total;
 
