@@ -370,8 +370,8 @@ async function fulfillOrder(order) {
 
 async function sendOrderNotifications(order, fulfillmentStatus) {
     if (fulfillmentStatus === 'delivered') {
-        await emailService.sendDeliveryComplete(order).catch(err => {
-            logError(`Failed to send delivery complete email: ${err.message}`);
+        await emailService.sendDeliveryNotifications(order).catch(err => {
+            logError(`Failed to send delivery notification emails: ${err.message}`);
         });
     } else if (fulfillmentStatus === 'failed') {
         await emailService.sendStatusUpdate(order).catch(err => {
@@ -443,6 +443,11 @@ async function getOrderDetails(reference) {
                         'datamart_status_check'
                     );
                     order = await Order.getByReference(reference);
+                    if (fulfillmentStatus === 'delivered') {
+                        await emailService.sendDeliveryNotifications(order).catch(err => {
+                            logError(`Failed to send delivery notification emails: ${err.message}`);
+                        });
+                    }
                 }
             }
         } catch (err) {

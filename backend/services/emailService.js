@@ -1,7 +1,7 @@
 const { Resend } = require('resend');
 const { API_KEY, EMAIL_FROM, ADMIN_EMAIL } = require('../config/resend');
 const { logError, logInfo } = require('../utils/logger');
-const { run } = require('../db/init');
+const { all, run } = require('../db/init');
 
 const resend = API_KEY ? new Resend(API_KEY) : null;
 
@@ -17,6 +17,14 @@ async function logEmailEvent(orderReference, recipientEmail, emailType, status, 
     } catch (err) {
         logError(`Failed to log email event: ${err.message}`);
     }
+}
+
+async function hasSentEmailEvent(orderReference, emailType) {
+  const rows = await all(
+    `SELECT id FROM email_events WHERE order_reference = ? AND email_type = ? AND status = 'sent' LIMIT 1`,
+    [orderReference, emailType]
+  );
+  return rows.length > 0;
 }
 
 function formatGhanaCedis(amount) {
@@ -419,6 +427,19 @@ function buildAdminNotificationEmail(order, event) {
 
 /* ==================== SEND FUNCTIONS ==================== */
 
+async function sendDeliveryNotifications(order) {
+  const customerEmailType = 'delivery_complete';
+  const adminEmailType = 'admin_delivery_completed';
+
+  if (!(await hasSentEmailEvent(order.reference, customerEmailType))) {
+    await sendDeliveryComplete(order);
+  }
+
+  if (!(await hasSentEmailEvent(order.reference, adminEmailType))) {
+    await sendAdminNotification(order, 'delivery_completed');
+  }
+}
+
 async function sendOrderConfirmation(order) {
     if (!resend) {
         logInfo('Resend not configured. Skipping email.');
@@ -771,6 +792,7 @@ module.exports = {
     sendPaymentSuccess,
     sendPaymentFailed,
     sendDeliveryComplete,
+    sendDeliveryNotifications,
     sendStatusUpdate,
     sendAdminNotification,
     sendCheckerResultEmail,

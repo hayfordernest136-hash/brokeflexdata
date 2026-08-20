@@ -293,9 +293,15 @@ async function checkDatamartStatus(req, res) {
                 );
 
                 const updatedOrder = await Order.getByReference(order.reference);
-                await emailService.sendStatusUpdate(updatedOrder).catch(err => {
-                    logError(`Failed to send status update after DataMart check: ${err.message}`);
-                });
+                if (newFulfillmentStatus === 'delivered') {
+                    await emailService.sendDeliveryNotifications(updatedOrder).catch(err => {
+                        logError(`Failed to send delivery notification emails: ${err.message}`);
+                    });
+                } else {
+                    await emailService.sendStatusUpdate(updatedOrder).catch(err => {
+                        logError(`Failed to send status update after DataMart check: ${err.message}`);
+                    });
+                }
 
                 order.fulfillment_status = newFulfillmentStatus;
             }
