@@ -10,7 +10,7 @@ export default function Home() {
                             Buy Data. <span className="text-brokeflex">Simple.</span> <span className="text-brokeflex">Fast.</span>
                         </h1>
                         <p className="text-lg text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
-                            Get affordable mobile data delivered directly to your phone.
+                            Brokeflex Data makes it easy to buy affordable mobile data in Ghana and have it delivered directly to your phone.
                         </p>
 
                         <p className="text-sm text-tertiary mb-10 tracking-wider">
@@ -36,6 +36,31 @@ export default function Home() {
                             >
                                 Check Order
                             </Link>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="border-t border-border py-16">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="grid gap-6 md:grid-cols-3">
+                            <div className="bg-card border border-border rounded-xl p-6">
+                                <h2 className="text-lg font-semibold text-text-primary mb-2">Mobile Data</h2>
+                                <p className="text-secondary text-sm leading-relaxed">
+                                    Choose a network and bundle, pay securely, and receive your data on your phone without airtime or complicated steps.
+                                </p>
+                            </div>
+                            <div className="bg-card border border-border rounded-xl p-6">
+                                <h2 className="text-lg font-semibold text-text-primary mb-2">Track Your Order</h2>
+                                <p className="text-secondary text-sm leading-relaxed">
+                                    Use your order reference to check payment and delivery progress whenever you need an update.
+                                </p>
+                            </div>
+                            <div className="bg-card border border-border rounded-xl p-6">
+                                <h2 className="text-lg font-semibold text-text-primary mb-2">Result Checkers</h2>
+                                <p className="text-secondary text-sm leading-relaxed">
+                                    Get WAEC and BECE result checkers delivered to your email after a successful payment.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
