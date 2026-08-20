@@ -407,10 +407,47 @@ function getCustomerFriendlyMessage(datamartResponse) {
 }
 
 async function getOrderDetails(reference) {
-    const order = await Order.getByReference(reference);
+    let order = await Order.getByReference(reference);
 
     if (!order) {
         throw { status: 404, message: 'Order not found. Please check your order reference.' };
+    }
+
+    const datamartReference = order.datamart_order_reference || order.datamart_transaction_reference;
+    if (datamartReference && !['delivered', 'failed'].includes(order.fulfillment_status)) {
+        try {
+            const datamartStatus = await datamartService.getOrderStatus(datamartReference);
+            const providerStatus = datamartStatus?.data?.orderStatus;
+            if (providerStatus) {
+                const fulfillmentStatus = datamartService.mapDatamartStatusToFulfillmentStatus(providerStatus);
+                if (fulfillmentStatus !== order.fulfillment_status) {
+                    let datamartResponse = {};
+                    try {
+                        datamartResponse = JSON.parse(order.datamart_response || '{}');
+                    } catch {
+                        datamartResponse = {};
+                    }
+
+                    await Order.update(order.reference, {
+                        fulfillment_status: fulfillmentStatus,
+                        datamart_response: JSON.stringify({
+                            ...datamartResponse,
+                            latestStatusCheck: datamartStatus.data
+                        })
+                    });
+                    await Order.auditLog(
+                        order.reference,
+                        'fulfillment_status',
+                        order.fulfillment_status,
+                        fulfillmentStatus,
+                        'datamart_status_check'
+                    );
+                    order = await Order.getByReference(reference);
+                }
+            }
+        } catch (err) {
+            logError(`DataMart status refresh failed for order ${reference}: ${err.message}`);
+        }
     }
 
     return order;
