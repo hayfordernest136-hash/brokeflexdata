@@ -18,37 +18,40 @@ const PORT = process.env.PORT || 4000;
 const isDatabaseConfigured = !!process.env.DATABASE_URL;
 
 if (!isDatabaseConfigured) {
-    const BACKEND_API_URL = process.env.BACKEND_API_URL || 'https://brokeflexdata-backend.onrender.com';
-    console.warn(`[Proxy] Frontend-only mode. Proxying /api requests to ${BACKEND_API_URL}`);
+    const BACKEND_API_URL = process.env.BACKEND_API_URL;
 
-    function createProxyMiddleware(target, includePrefix = false) {
-        const targetUrl = new URL(target);
-        return function (req, res) {
-            const path = includePrefix ? req.originalUrl : req.url;
-            const parsedUrl = new URL(path, target);
-            const options = {
-                hostname: targetUrl.hostname,
-                port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
-                path: parsedUrl.pathname + parsedUrl.search,
-                method: req.method,
-                headers: { ...req.headers, host: targetUrl.host },
+    if (BACKEND_API_URL) {
+        console.warn(`[Proxy] Frontend-only mode. Proxying /api requests to ${BACKEND_API_URL}`);
+
+        function createProxyMiddleware(target, includePrefix = false) {
+            const targetUrl = new URL(target);
+            return function (req, res) {
+                const path = includePrefix ? req.originalUrl : req.url;
+                const parsedUrl = new URL(path, target);
+                const options = {
+                    hostname: targetUrl.hostname,
+                    port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
+                    path: parsedUrl.pathname + parsedUrl.search,
+                    method: req.method,
+                    headers: { ...req.headers, host: targetUrl.host },
+                };
+
+                const lib = targetUrl.protocol === 'https:' ? https : http;
+                const proxyReq = lib.request(options, (proxyRes) => {
+                    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+                    proxyRes.pipe(res);
+                });
+
+                proxyReq.on('error', () => {
+                    res.status(502).json({ status: 'error', message: 'Backend service unavailable.' });
+                });
+
+                req.pipe(proxyReq);
             };
+        }
 
-            const lib = targetUrl.protocol === 'https:' ? https : http;
-            const proxyReq = lib.request(options, (proxyRes) => {
-                res.writeHead(proxyRes.statusCode, proxyRes.headers);
-                proxyRes.pipe(res);
-            });
-
-            proxyReq.on('error', () => {
-                res.status(502).json({ status: 'error', message: 'Backend service unavailable.' });
-            });
-
-            req.pipe(proxyReq);
-        };
+        app.use('/api', createProxyMiddleware(BACKEND_API_URL, true));
     }
-
-    app.use('/api', createProxyMiddleware(BACKEND_API_URL, true));
 }
 
 app.use(helmet({
@@ -144,29 +147,23 @@ app.get('*', (req, res) => {
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
+        console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+        console.log(`[Server] Database: ${process.env.DATABASE_URL ? 'initializing' : 'skipped (no DATABASE_URL) - serving frontend only'}`);
+    });
+
     if (process.env.DATABASE_URL) {
         initializeDatabase()
             .then(async () => {
                 await migrateAdminCredentials();
-                app.listen(PORT, () => {
-                    console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
-                    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-                    console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-                    console.log(`[Server] Database: MySQL connected`);
-                });
+                console.log('[Database] MySQL connected and initialized');
             })
             .catch(err => {
                 console.error('[Database] Failed to initialize MySQL database:', err.message);
                 console.error('[Database] Ensure DATABASE_URL is set correctly');
-                process.exit(1);
             });
-    } else {
-        app.listen(PORT, () => {
-                    console.log(`[Server] Brokeflex Data backend running on port ${PORT}`);
-                    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-                    console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-                    console.log(`[Server] Database: skipped (no DATABASE_URL) - serving frontend only`);
-                });
     }
 }
 
