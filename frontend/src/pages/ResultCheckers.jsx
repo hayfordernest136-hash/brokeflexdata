@@ -18,7 +18,7 @@ function calculateCheckerSellingPrice(datamartPrice) {
 }
 
 function getCheckerPrice(product) {
-    return calculateCheckerSellingPrice(product.price);
+    return product.sellingPrice ?? calculateCheckerSellingPrice(product.price);
 }
 
 const CHECKER_CONFIG = {
@@ -298,7 +298,7 @@ export default function ResultCheckers() {
                                         </div>
                                         <div>
                                             <span className="text-sm text-secondary">Price</span>
-                                            <span className="ml-2 font-bold text-2xl text-brokeflex">{formatPrice(selectedProduct.price)}</span>
+                                            <span className="ml-2 font-bold text-2xl text-brokeflex">{formatPrice(getCheckerPrice(selectedProduct))}</span>
                                         </div>
                                         <div>
                                             <span className="text-sm text-secondary">Stock</span>

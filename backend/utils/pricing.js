@@ -1,7 +1,7 @@
 const MARKUP_PERCENTAGE = 17;
 const ROUNDING_DENOMINATOR = 10;
 
-const PAYSTACK_PERCENTAGE_FEE = parseFloat(process.env.PAYSTACK_FEE_PERCENTAGE || '1.95');
+const PAYSTACK_PERCENTAGE_FEE = parseFloat(process.env.PAYSTACK_FEE_PERCENTAGE || '2.5');
 
 function ghanaToPesewas(amount) {
     return Math.round(parseFloat(amount) * 100);

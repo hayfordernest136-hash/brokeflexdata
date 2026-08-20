@@ -123,14 +123,14 @@ app.use(express.static(frontendDist, {
     }
 }));
 
-app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendDist, 'index.html'), {
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'admin.html'), {
         headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
     });
 });
 
-app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(frontendDist, 'admin.html'), {
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'), {
         headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
     });
 });

@@ -45,6 +45,7 @@ async function getCheckerProducts() {
         name: p.name,
         description: p.description,
         price: p.price,
+        sellingPrice: calculateCheckerSellingPrice(Number(p.price)).sellingPrice,
         inStock: p.inStock,
         stockCount: p.stockCount
     }));

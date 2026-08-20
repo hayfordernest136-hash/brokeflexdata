@@ -156,9 +156,9 @@ async function getDashboardStats() {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
     stats.thisMonthRevenue = parseFloat((await get(
-        'SELECT COALESCE(SUM(amount), 0) as total FROM orders WHERE payment_status = ? AND created_at >= ?'
+        'SELECT COALESCE(SUM(amount), 0) as total FROM orders WHERE payment_status = ? AND created_at >= ?',
         ['successful', monthStartStr]
-    )).total;
+    )).total);
 
     stats.thisMonthOrders = (await get(
         'SELECT COUNT(*) as count FROM orders WHERE created_at >= ?',
