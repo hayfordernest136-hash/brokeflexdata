@@ -13,6 +13,7 @@ import {
     FileText,
 } from 'lucide-react';
 import { useState } from 'react';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const navItems = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -51,9 +52,12 @@ export default function AdminLayout() {
                 }`}
             >
                 <div className="flex flex-col h-full">
-                    <div className="p-4 border-b border-admin-border">
-                        <h1 className="text-xl font-semibold text-admin-text">Brokeflex Data</h1>
-                        <p className="text-xs text-admin-text-secondary">Admin Panel</p>
+                    <div className="p-4 border-b border-admin-border flex items-start justify-between gap-3">
+                        <div>
+                            <h1 className="text-xl font-semibold text-admin-text">Brokeflex Data</h1>
+                            <p className="text-xs text-admin-text-secondary">Admin Panel</p>
+                        </div>
+                        <ThemeToggle />
                     </div>
 
                     <nav className="flex-1 py-4 space-y-1">

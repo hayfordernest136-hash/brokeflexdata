@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ThemeToggle from '../../components/ThemeToggle';
 import { useAdminAuth } from '../auth/AuthContext';
 import { apiRequest } from '../services/api';
 import { Eye, EyeOff } from 'lucide-react';
@@ -34,7 +35,10 @@ export default function AdminLogin() {
     };
 
     return (
-        <div className="min-h-screen bg-admin-bg flex items-center justify-center">
+        <div className="min-h-screen bg-admin-bg flex items-center justify-center relative">
+            <div className="absolute top-4 right-4">
+                <ThemeToggle />
+            </div>
             <div className="w-full max-w-md">
                 <div className="bg-admin-card border border-admin-border rounded-xl shadow-xl p-8">
                     <div className="text-center mb-6">

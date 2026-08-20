@@ -49,6 +49,16 @@
   --color-text-tertiary: #64748b;
 }
 
+[data-theme="light"] {
+  --color-admin-bg: #f8fafc;
+  --color-admin-card: #ffffff;
+  --color-admin-sidebar: #ffffff;
+  --color-admin-input: #f1f5f9;
+  --color-admin-border: #e2e8f0;
+  --color-admin-text: #1e293b;
+  --color-admin-text-secondary: #64748b;
+}
+
 @layer base {
   html,
   body {
