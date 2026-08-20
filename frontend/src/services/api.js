@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: '/api',
-    timeout: 30000,
+    timeout: 15000,
 });
 
 if (import.meta.env.DEV) {
@@ -24,7 +24,7 @@ if (import.meta.env.DEV) {
     );
 }
 
-async function fetchWithRetry(apiCall, maxRetries = 3, delay = 1000) {
+async function fetchWithRetry(apiCall, maxRetries = 1, delay = 1000) {
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
