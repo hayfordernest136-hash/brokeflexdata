@@ -758,6 +758,19 @@ async function sendCheckerAdminNotification(order, event) {
     }
 }
 
+async function sendCheckerDeliveryNotifications(order) {
+  const customerEmailType = 'checker_result';
+  const adminEmailType = 'checker_admin_delivery_completed';
+
+  if (!(await hasSentEmailEvent(order.reference, customerEmailType))) {
+    await sendCheckerResultEmail(order);
+  }
+
+  if (!(await hasSentEmailEvent(order.reference, adminEmailType))) {
+    await sendCheckerAdminNotification(order, 'checker_delivery_completed');
+  }
+}
+
 async function sendTestEmail(toEmail, subject, htmlContent) {
     if (!resend) {
         return { error: 'Resend is not configured. Set RESEND_API_KEY in your environment.' };
@@ -797,6 +810,7 @@ module.exports = {
     sendAdminNotification,
     sendCheckerResultEmail,
     sendCheckerAdminNotification,
+    sendCheckerDeliveryNotifications,
     buildOrderConfirmationEmail,
     buildPaymentSuccessEmail,
     buildPaymentFailedEmail,

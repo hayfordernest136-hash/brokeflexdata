@@ -220,8 +220,8 @@ async function processCheckerPaymentVerification(paystackReference) {
     }
 
     if (fulfillmentResult && fulfillmentResult.fulfillmentStatus === 'delivered') {
-        await emailService.sendCheckerResultEmail(fulfillmentResult.order).catch(e => {
-            logError(`Failed to send checker result email: ${e.message}`);
+        await emailService.sendCheckerDeliveryNotifications(fulfillmentResult.order).catch(e => {
+            logError(`Failed to send checker delivery notification emails: ${e.message}`);
         });
     }
 
@@ -444,6 +444,10 @@ async function checkResultCheckerStatus(orderReference) {
                 })
             });
             await ResultCheckerOrder.auditLog(order.reference, 'fulfillment_status', order.fulfillment_status, 'delivered', 'datamart_status_check');
+            const updatedOrder = await ResultCheckerOrder.getByReference(order.reference);
+            await emailService.sendCheckerDeliveryNotifications(updatedOrder).catch(e => {
+                logError(`Failed to send checker delivery notification emails: ${e.message}`);
+            });
             logInfo(`Checker order ${order.reference} marked as delivered after status check.`);
         }
     }
