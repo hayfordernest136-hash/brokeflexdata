@@ -6,6 +6,58 @@ const { logInfo, logError } = require('../utils/logger');
 const CACHE_DURATION = 60 * 1000;
 let bundlesCache = null;
 let bundlesCacheTime = 0;
+let bundlesRefreshPromise = null;
+
+async function refreshBundlesCache() {
+    if (bundlesRefreshPromise) {
+        return bundlesRefreshPromise;
+    }
+
+    bundlesRefreshPromise = (async () => {
+        logInfo('Fetching bundles from DataMart API...');
+        const packagesData = await datamartService.getDataPackages();
+
+        if (!packagesData || packagesData.status !== 'success') {
+            throw new Error('Failed to fetch data packages from provider');
+        }
+
+        const rawPackages = packagesData.data || {};
+        const networks = ['YELLO', 'TELECEL', 'AT_PREMIUM'];
+        const NETWORK_LABELS = {
+            YELLO: 'MTN',
+            TELECEL: 'Telecel',
+            AT_PREMIUM: 'AirtelTigo'
+        };
+
+        const formattedBundles = {};
+        for (const netCode of networks) {
+            const pkgs = rawPackages[netCode] || [];
+            formattedBundles[netCode] = pkgs.map(pkg => {
+                const datamartCost = Number(pkg.price);
+                const pricing = calculateSellingPrice(datamartCost);
+                return {
+                    capacity: Number(pkg.capacity),
+                    capacityString: String(pkg.capacity),
+                    mb: Number(pkg.mb),
+                    price: pricing.sellingPrice,
+                    datamartCost,
+                    networkCode: pkg.network,
+                    networkLabel: NETWORK_LABELS[pkg.network] || pkg.network,
+                    displayName: `${pkg.capacity}GB`
+                };
+            });
+        }
+
+        bundlesCache = { data: formattedBundles, pricingTier: packagesData.pricingTier };
+        bundlesCacheTime = Date.now();
+        logInfo(`Bundles cached. Networks: ${Object.keys(formattedBundles).join(', ')}`);
+        return bundlesCache;
+    })().finally(() => {
+        bundlesRefreshPromise = null;
+    });
+
+    return bundlesRefreshPromise;
+}
 
 async function getBundles(req, res, next) {
     try {
@@ -22,47 +74,11 @@ async function getBundles(req, res, next) {
             }
         }
 
-        if (!bundlesCache || (Date.now() - bundlesCacheTime > CACHE_DURATION)) {
-            logInfo('Fetching bundles from DataMart API...');
-            const packagesData = await datamartService.getDataPackages();
-
-            if (!packagesData || packagesData.status !== 'success') {
-                throw new Error('Failed to fetch data packages from provider');
-            }
-
-            const allData = packagesData.data || {};
-            const networks = ['YELLO', 'TELECEL', 'AT_PREMIUM'];
-
-            const formattedBundles = {};
-            const rawPackages = packagesData.data || {};
-
-            const NETWORK_LABELS = {
-                YELLO: 'MTN',
-                TELECEL: 'Telecel',
-                AT_PREMIUM: 'AirtelTigo'
-            };
-
-            for (const netCode of networks) {
-                const pkgs = rawPackages[netCode] || [];
-                formattedBundles[netCode] = pkgs.map(pkg => {
-                    const datamartCost = Number(pkg.price);
-                    const pricing = calculateSellingPrice(datamartCost);
-                    return {
-                        capacity: Number(pkg.capacity),
-                        capacityString: String(pkg.capacity),
-                        mb: Number(pkg.mb),
-                        price: pricing.sellingPrice,
-                        datamartCost: datamartCost,
-                        networkCode: pkg.network,
-                        networkLabel: NETWORK_LABELS[pkg.network] || pkg.network,
-                        displayName: `${pkg.capacity}GB`
-                    };
-                });
-            }
-
-            bundlesCache = { data: formattedBundles, pricingTier: packagesData.pricingTier };
-            bundlesCacheTime = Date.now();
-            logInfo(`Bundles cached. Networks: ${Object.keys(formattedBundles).join(', ')}`);
+        const cacheExpired = Date.now() - bundlesCacheTime > CACHE_DURATION;
+        if (!bundlesCache) {
+            await refreshBundlesCache();
+        } else if (cacheExpired) {
+            refreshBundlesCache().catch(err => logError(`Background bundle refresh failed: ${err.message}`));
         }
 
         let bundles = bundlesCache.data;
