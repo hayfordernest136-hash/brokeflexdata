@@ -43,19 +43,6 @@ function formatDate(dateString) {
     });
 }
 
-function getEstimatedDelivery(order) {
-    if (order.fulfillmentStatus === 'delivered' || order.fulfillmentStatus === 'failed') {
-        return null;
-    }
-
-    const createdAt = order.createdAt ? new Date(order.createdAt).getTime() : Date.now();
-    const ageInMinutes = Math.max(0, (Date.now() - createdAt) / 60000);
-
-    return ageInMinutes >= 30
-        ? 'May take up to 1-2 hours during provider delays.'
-        : 'Usually delivered within a few moments after payment.';
-}
-
 export default function StatusCard({ order, _type = 'result' }) {
     const isSuccess = order.fulfillmentStatus === 'delivered' && order.paymentStatus === 'successful';
     const isFailed = order.fulfillmentStatus === 'failed';
@@ -99,7 +86,6 @@ export default function StatusCard({ order, _type = 'result' }) {
     }
 
     const network = NETWORK_CONFIG[order.network] || NETWORK_CONFIG.MTN;
-    const estimatedDelivery = getEstimatedDelivery(order);
 
     const detailRows = [
         { label: 'Order Reference', value: order.reference, mono: true },
@@ -111,7 +97,6 @@ export default function StatusCard({ order, _type = 'result' }) {
         { label: 'Amount Paid', value: formatPrice(order.paystackAmount || order.amount), bold: true },
         { label: 'Payment', value: <StatusBadge status={order.paymentStatus} /> },
         { label: 'Delivery', value: <StatusBadge status={order.fulfillmentStatus} /> },
-        { label: 'Estimated Delivery', value: estimatedDelivery },
         { label: 'Date', value: formatDate(order.createdAt) },
     ];
 
