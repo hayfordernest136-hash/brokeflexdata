@@ -8,6 +8,7 @@ const datamartCheckerService = require('./datamartCheckerService');
 const emailService = require('./emailService');
 
 const CHECKER_MARKUP_PERCENTAGE = 15;
+const CHECKER_SELLING_PRICE = 18;
 
 const CHECKER_CACHE_DURATION = 30 * 1000;
 let checkerProductsCache = null;
@@ -15,13 +16,13 @@ let checkerProductsCacheTime = 0;
 
 function calculateCheckerSellingPrice(datamartPrice) {
     const datamartCostPesewas = ghanaToPesewas(datamartPrice);
-    const markupPesewas = Math.round(datamartCostPesewas * (CHECKER_MARKUP_PERCENTAGE / 100));
-    const sellingPricePesewas = datamartCostPesewas + markupPesewas;
+    const sellingPricePesewas = ghanaToPesewas(CHECKER_SELLING_PRICE);
+    const markupPesewas = sellingPricePesewas - datamartCostPesewas;
     const sellingPrice = pesewasToGhana(sellingPricePesewas);
 
     return {
         datamartCost: pesewasToGhana(datamartCostPesewas),
-        markup: CHECKER_MARKUP_PERCENTAGE,
+        markup: datamartCostPesewas > 0 ? ((markupPesewas / datamartCostPesewas) * 100) : CHECKER_MARKUP_PERCENTAGE,
         sellingPrice: parseFloat(sellingPrice.toFixed(2)),
         sellingPricePesewas,
         markupAmount: pesewasToGhana(markupPesewas)

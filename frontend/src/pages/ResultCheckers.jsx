@@ -8,17 +8,8 @@ import ErrorState from '../components/ErrorState';
 import { formatPrice } from '../components/BundleGrid';
 import { CheckCircle, XCircle, Smartphone } from 'lucide-react';
 
-const CHECKER_MARKUP = 15;
-
-function calculateCheckerSellingPrice(datamartPrice) {
-    const pesewas = Math.round(datamartPrice * 100);
-    const markupPesewas = Math.round(pesewas * (CHECKER_MARKUP / 100));
-    const totalPesewas = pesewas + markupPesewas;
-    return totalPesewas / 100;
-}
-
 function getCheckerPrice(product) {
-    return product.sellingPrice ?? calculateCheckerSellingPrice(product.price);
+    return product.sellingPrice ?? 18;
 }
 
 const CHECKER_CONFIG = {
