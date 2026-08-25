@@ -67,28 +67,37 @@ function buildBaseEmail(to, subject, title, subtitle, bodyContent, footerContent
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f9fafb; margin: 0; padding: 20px; color: #111827; }
-    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-    .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 32px 24px; text-align: center; }
-    .logo { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .logo-text { color: #fbbf24; font-weight: 700; font-size: 24px; }
-    .logo-subtext { color: #f1f5f9; font-size: 16px; }
-    .title { color: #ffffff; font-size: 20px; font-weight: 600; margin: 0; }
-    .subtitle { color: #cbd5e1; font-size: 14px; margin: 4px 0 0; }
-    .content { padding: 32px 24px; }
-    .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #eef5f4; margin: 0; padding: 28px 16px; color: #102a2b; }
+    .container { max-width: 620px; margin: 0 auto; background: #ffffff; border: 1px solid #dbe9e7; border-radius: 16px; box-shadow: 0 12px 35px rgba(15, 68, 68, 0.10); overflow: hidden; }
+    .header { background: #102a2b; padding: 34px 28px 30px; text-align: left; border-bottom: 4px solid #14b8a8; }
+    .logo { display: flex; align-items: baseline; gap: 7px; margin-bottom: 28px; }
+    .logo-text { color: #37d7c5; font-weight: 800; font-size: 25px; letter-spacing: 0.2px; }
+    .logo-subtext { color: #d7eeeb; font-size: 16px; font-weight: 500; }
+    .title { color: #ffffff; font-size: 24px; line-height: 1.25; font-weight: 700; margin: 0; }
+    .subtitle { color: #b9d3d0; font-size: 14px; line-height: 1.5; margin: 7px 0 0; }
+    .content { padding: 32px 28px 36px; }
+    .detail-row { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 13px 0; border-bottom: 1px solid #e7f0ef; }
     .detail-row:last-child { border-bottom: none; }
-    .label { color: #6b7280; font-size: 14px; }
-    .value { font-weight: 500; font-size: 14px; color: #111827; }
-    .total-row { font-size: 18px; font-weight: 600; }
-    .total-row .value { color: #0f172a; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #ffffff; }
-    .highlight { background: #fffbeb; padding: 16px 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 16px 0; }
-    .highlight p { margin: 0; font-size: 14px; color: #92400e; }
-    .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
-    .btn-primary { background: #fbbf24; color: #1e293b; }
-    .footer { background: #f3f4f6; padding: 24px; text-align: center; font-size: 12px; color: #9ca3af; }
-    .footer a { color: #6b7280; text-decoration: none; }
+    .label { color: #66807f; font-size: 13px; }
+    .value { font-weight: 600; font-size: 14px; color: #173c3d; text-align: right; }
+    .total-row { font-size: 19px; font-weight: 700; }
+    .total-row .value { color: #0d9488; }
+    .status-badge { display: inline-block; padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #ffffff; letter-spacing: 0.2px; }
+    .highlight { background: #e8f8f5; padding: 17px 20px; border-radius: 10px; border-left: 4px solid #14b8a8; margin: 20px 0; }
+    .highlight p { margin: 0; font-size: 14px; line-height: 1.5; color: #145a58; }
+    .btn { display: inline-block; padding: 13px 24px; border-radius: 9px; text-decoration: none; font-weight: 700; font-size: 14px; }
+    .btn-primary { background: #14b8a8; color: #ffffff; }
+    .footer { background: #f4f9f8; border-top: 1px solid #e1eeec; padding: 24px 28px; text-align: center; font-size: 12px; line-height: 1.5; color: #78918f; }
+    .footer a { color: #0d9488; text-decoration: none; font-weight: 600; }
+    @media only screen and (max-width: 480px) {
+      body { padding: 12px 8px; }
+      .header { padding: 27px 20px 25px; }
+      .content { padding: 26px 20px 30px; }
+      .footer { padding: 20px; }
+      .title { font-size: 21px; }
+      .detail-row { align-items: flex-start; }
+      .value { max-width: 62%; overflow-wrap: anywhere; }
+    }
   </style>
 </head>
 <body>
