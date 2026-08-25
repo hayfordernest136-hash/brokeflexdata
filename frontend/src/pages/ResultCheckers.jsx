@@ -230,7 +230,7 @@ export default function ResultCheckers() {
                                 Result Checkers
                             </h1>
                             <p className="text-secondary">
-                                Get your WAEC or BECE result checker instantly. The serial number and PIN are delivered to your email after payment.
+                                Get your WAEC or BECE result checker instantly. The serial number and PIN are delivered to your email and phone after payment.
                             </p>
                         </div>
 
