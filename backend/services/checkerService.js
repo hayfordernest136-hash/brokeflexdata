@@ -298,7 +298,7 @@ async function fulfillCheckerOrder(order) {
             order.checker_type,
             order.phone_number,
             purchaseRef,
-            true
+            false
         );
 
         await ResultCheckerOrder.update(order.reference, {
