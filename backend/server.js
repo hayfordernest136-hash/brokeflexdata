@@ -11,6 +11,7 @@ const http = require('http');
 const { initializeDatabase, testConnection, migrateAdminCredentials } = require('./db/init');
 const { errorHandler } = require('./middleware/errorHandler');
 const { asyncHandler } = require('./middleware/asyncHandler');
+const { warmBundlesCache } = require('./controllers/bundleController');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -152,6 +153,7 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
         console.log(`[Server] Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
         console.log(`[Server] Database: ${process.env.DATABASE_URL ? 'initializing' : 'skipped (no DATABASE_URL) - serving frontend only'}`);
+        warmBundlesCache();
     });
 
     if (process.env.DATABASE_URL) {

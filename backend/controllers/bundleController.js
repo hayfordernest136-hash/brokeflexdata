@@ -123,5 +123,8 @@ async function checkBalance(req, res, next) {
 module.exports = {
     getBundles,
     getNetworks,
-    checkBalance
+    checkBalance,
+    warmBundlesCache: () => refreshBundlesCache().catch(err => {
+        logError(`Initial bundle cache warm-up failed: ${err.message}`);
+    })
 };
