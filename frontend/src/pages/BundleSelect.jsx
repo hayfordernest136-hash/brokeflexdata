@@ -34,37 +34,41 @@ export default function BundleSelect() {
     const [bundles, setBundles] = useState([]);
     const [bundlesLoading, setBundlesLoading] = useState(false);
     const [bundlesError, setBundlesError] = useState(null);
+    const [usingCached, setUsingCached] = useState(false);
     const [processingPayment, setProcessingPayment] = useState(false);
     const [submitError, setSubmitError] = useState(null);
     const [callbackHandled, setCallbackHandled] = useState(false);
 
-    const handlePaymentCallback = useCallback(
-        async (brokeflexRef, paystackRef) => {
-            setProcessingPayment(true);
-            setSubmitError(null);
-            try {
-                const response = await verifyPayment(brokeflexRef, paystackRef);
-                const order = response.data.order;
-                navigate(`/order/${order.reference}`, { replace: true });
-            } catch (err) {
-                setSubmitError(err.message || 'Failed to verify payment.');
-                setProcessingPayment(false);
-            }
-        },
-        [navigate]
-    );
+    const CACHE_KEY = 'brokeflex_bundles_cache';
+    const CACHE_DURATION = 5 * 60 * 1000;
 
-    useEffect(() => {
-        const callbackRef = query.get('callback_ref');
-        const paystackRef = query.get('trxref') || query.get('reference');
-
-        if (callbackRef && paystackRef && !callbackHandled) {
-            setCallbackHandled(true);
-            handlePaymentCallback(callbackRef, paystackRef);
+    const getCachedBundles = () => {
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (!cached) return null;
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp > CACHE_DURATION) return null;
+            return data;
+        } catch {
+            return null;
         }
-    }, [query, handlePaymentCallback, callbackHandled]);
+    };
 
-    const loadBundles = useCallback(async () => {
+    const setCachedBundles = (data) => {
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+        } catch { }
+    };
+
+    const loadBundles = useCallback(async (isRetry = false) => {
+        if (!isRetry) {
+            const cached = getCachedBundles();
+            if (cached && cached[networkCode] && cached[networkCode].length > 0) {
+                setBundles(cached[networkCode]);
+                setUsingCached(true);
+            }
+        }
+
         setBundlesLoading(true);
         setBundlesError(null);
 
@@ -76,9 +80,17 @@ export default function BundleSelect() {
             const response = await fetchBundles(networkCode);
             const networkBundles = response.data[networkCode] || [];
             setBundles(networkBundles);
+            setUsingCached(false);
+            setCachedBundles(response.data);
         } catch (err) {
             if (import.meta.env.DEV) {
                 console.error('Bundle load error:', err);
+            }
+            const hasCached = getCachedBundles();
+            if (hasCached && hasCached[networkCode] && hasCached[networkCode].length > 0) {
+                setBundles(hasCached[networkCode]);
+                setUsingCached(true);
+                return;
             }
             const status = err.response?.status;
             let message = 'We are temporarily unable to load data packages. Please try again shortly.';
@@ -190,11 +202,17 @@ export default function BundleSelect() {
                         error={bundlesError}
                     />
 
+                    {usingCached && !bundlesLoading && (
+                        <div className="mt-4 text-center">
+                            <p className="text-xs text-tertiary">Showing cached data. Refreshing...</p>
+                        </div>
+                    )}
+
                     {bundlesError && (
                         <div className="mt-6">
                             <ErrorState
                                 message={bundlesError}
-                                onRetry={loadBundles}
+                                onRetry={() => loadBundles(true)}
                             />
                         </div>
                     )}

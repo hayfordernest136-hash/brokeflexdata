@@ -5,7 +5,7 @@ const { logError, logInfo } = require('../utils/logger');
 
 const httpClient = axios.create({
     baseURL: BASE_URL,
-    timeout: 8000,
+    timeout: 15000,
     headers: HEADERS
 });
 
