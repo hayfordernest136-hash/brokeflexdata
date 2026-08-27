@@ -24,7 +24,7 @@ if (import.meta.env.DEV) {
     );
 }
 
-async function fetchWithRetry(apiCall, maxRetries = 1, delay = 1000) {
+async function fetchWithRetry(apiCall, maxRetries = 3, delay = 2000) {
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {

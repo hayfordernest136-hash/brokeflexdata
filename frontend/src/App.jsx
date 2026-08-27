@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -23,6 +24,18 @@ import Emails from './admin/pages/Emails';
 import Settings from './admin/pages/Settings';
 import AuditLogs from './admin/pages/AuditLogs';
 
+function KeepAlivePing() {
+    useEffect(() => {
+        const ping = () => {
+            fetch('/api/config', { method: 'GET' }).catch(() => {});
+        };
+        ping();
+        const interval = setInterval(ping, 4 * 60 * 1000);
+        return () => clearInterval(interval);
+    }, []);
+    return null;
+}
+
 function CustomerApp() {
     return (
         <div className="min-h-screen flex flex-col bg-bg text-text-primary">
@@ -46,6 +59,7 @@ function CustomerApp() {
 export default function App() {
     return (
         <Router>
+            <KeepAlivePing />
             <Routes>
                 <Route path="/admin/login" element={
                     <AdminAuthProvider>
