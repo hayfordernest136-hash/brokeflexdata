@@ -32,6 +32,17 @@ async function fetchWithRetry(apiCall, maxRetries = 3, delay = 2000) {
         } catch (err) {
             lastError = err;
             const isRetryable = !err.response || err.response.status >= 500 || err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK';
+            
+            console.error(`[API Retry] Attempt ${attempt + 1}/${maxRetries + 1} failed:`, {
+                url: err.config?.url,
+                method: err.config?.method,
+                status: err.response?.status,
+                message: err.message,
+                data: err.response?.data,
+                code: err.code,
+                isRetryable,
+            });
+            
             if (!isRetryable || attempt === maxRetries) break;
             const backoffDelay = delay * Math.pow(2, attempt);
             await new Promise((resolve) => setTimeout(resolve, backoffDelay));
