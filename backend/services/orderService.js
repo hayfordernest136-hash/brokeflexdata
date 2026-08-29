@@ -166,7 +166,12 @@ async function initiatePayment(order) {
         callback_url: `${process.env.FRONTEND_URL}/checkout?callback_ref=${order.reference}`
     };
 
+    logInfo(`Initiating Paystack payment for order ${order.reference}`);
+    logInfo(`Paystack payload: ${JSON.stringify(paystackPayload)}`);
+
     const paystackResponse = await paystackService.initializeTransaction(paystackPayload);
+
+    logInfo(`Paystack response: ${JSON.stringify(paystackResponse)}`);
 
     if (paystackResponse.status && paystackResponse.data) {
         logInfo(`Paystack transaction initialized for order ${order.reference}, paystack ref: ${paystackResponse.data.reference}`);
@@ -176,6 +181,7 @@ async function initiatePayment(order) {
         };
     }
 
+    logError(`Paystack returned unsuccessful response for order ${order.reference}: ${JSON.stringify(paystackResponse)}`);
     throw new Error(paystackResponse.message || 'Failed to initialize payment');
 }
 
