@@ -105,9 +105,6 @@ async function initiatePayment(req, res, next) {
         next(err);
     }
 }
-        next(err);
-    }
-}
 
 async function verifyPayment(req, res, next) {
     try {
