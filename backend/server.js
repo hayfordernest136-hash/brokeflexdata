@@ -113,6 +113,14 @@ app.get('/api/config', (req, res) => {
     });
 });
 
+app.get('/api/version', (req, res) => {
+    res.json({
+        version: process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || 'unknown',
+        branch: process.env.RENDER_GIT_BRANCH || process.env.GIT_BRANCH || 'unknown',
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.use('/api/*', (req, res) => {
     res.status(404).json({ status: 'error', message: 'API endpoint not found.' });
 });

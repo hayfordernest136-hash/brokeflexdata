@@ -135,6 +135,10 @@ async function createOrder(network, bundle, phoneNumber, email, contactNumber) {
         });
     } catch (err) {
         logError(`Database error creating order: ${err.message}`);
+        logError(`Error code: ${err.code}`);
+        logError(`Error errno: ${err.errno}`);
+        logError(`Error sqlState: ${err.sqlState}`);
+        logError(`Error sqlMessage: ${err.sqlMessage}`);
         throw {
             status: 500,
             message: 'Unable to create order. Please try again.'
