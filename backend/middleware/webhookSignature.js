@@ -15,10 +15,12 @@ function verifyWebhookSignature(rawBody, signature) {
     }
     if (secrets.length === 0) return false;
 
+    const bodyString = Buffer.isBuffer(rawBody) ? rawBody : (typeof rawBody === 'string' ? Buffer.from(rawBody) : Buffer.from(JSON.stringify(rawBody)));
+
     for (const secret of secrets) {
         const expected = crypto
             .createHmac('sha512', secret)
-            .update(rawBody)
+            .update(bodyString)
             .digest('hex');
         try {
             if (crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
