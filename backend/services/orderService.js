@@ -41,11 +41,23 @@ async function validateOrderInput(network, bundleCapacity, phoneNumber, email) {
 async function getCachedBundles(networkCode) {
     const now = Date.now();
     if (bundleCache && (now - bundleCacheTime < BUNDLE_CACHE_DURATION) && bundleCache[networkCode]) {
+        logInfo(`Using cached bundles for ${networkCode}, age: ${now - bundleCacheTime}ms`);
         return bundleCache[networkCode];
     }
 
-    const packagesData = await datamartService.getDataPackages();
+    logInfo(`Fetching fresh bundles from DataMart for ${networkCode}`);
+    let packagesData;
+    try {
+        packagesData = await datamartService.getDataPackages();
+    } catch (err) {
+        logError(`DataMart API error: ${err.message}`);
+        logError(`Error code: ${err.code}`);
+        logError(`Error response: ${JSON.stringify(err.response?.data)}`);
+        throw err;
+    }
+
     if (!packagesData || packagesData.status !== 'success') {
+        logError(`DataMart returned unsuccessful response: ${JSON.stringify(packagesData)}`);
         throw new Error('Failed to fetch data packages from provider');
     }
 
@@ -60,6 +72,7 @@ async function getCachedBundles(networkCode) {
     bundleCache = cache;
     bundleCacheTime = now;
 
+    logInfo(`Cached bundles for ${networkCode}, count: ${cache[networkCode]?.length || 0}`);
     return cache[networkCode] || [];
 }
 
