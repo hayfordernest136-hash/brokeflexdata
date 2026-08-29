@@ -46,6 +46,8 @@ async function createOrder(req, res, next) {
             }
         });
     } catch (err) {
+        logError(`Order creation failed: ${err.message}`);
+        logError(`Error stack: ${err.stack}`);
         if (err.status) {
             return res.status(err.status).json({ status: 'error', message: err.message });
         }
@@ -88,6 +90,8 @@ async function initiatePayment(req, res, next) {
             }
         });
     } catch (err) {
+        logError(`Payment initiation failed for order ${order?.reference || 'unknown'}: ${err.message}`);
+        logError(`Error stack: ${err.stack}`);
         if (err.status === 401 || err.status === 403) {
             logError(`Payment provider auth error for order ${order?.reference}: ${err.message}`);
             return res.status(502).json({
@@ -98,6 +102,9 @@ async function initiatePayment(req, res, next) {
         if (err.status) {
             return res.status(err.status).json({ status: 'error', message: err.message });
         }
+        next(err);
+    }
+}
         next(err);
     }
 }

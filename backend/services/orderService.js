@@ -82,7 +82,17 @@ async function createOrder(network, bundle, phoneNumber, email, contactNumber) {
 
     const networkCode = validation.networkCode;
 
-    const datamartBundles = await getCachedBundles(networkCode);
+    let datamartBundles;
+    try {
+        datamartBundles = await getCachedBundles(networkCode);
+    } catch (err) {
+        logError(`Failed to fetch bundles from DataMart: ${err.message}`);
+        throw {
+            status: 503,
+            message: 'Unable to verify bundle availability. Please try again in a moment.'
+        };
+    }
+
     const datamartBundle = findBundleByCapacity(datamartBundles, bundle.capacity);
 
     if (!datamartBundle) {
@@ -100,27 +110,36 @@ async function createOrder(network, bundle, phoneNumber, email, contactNumber) {
     const reference = generateReference();
     const paymentReference = generateReference('ps');
 
-    const order = await Order.create({
-        reference,
-        network: network,
-        network_code: validation.networkCode,
-        bundle_capacity: bundle.capacity,
-        bundle_capacity_string: bundle.capacity.toString(),
-        bundle_price: pricing.sellingPrice,
-        phone_number: validation.phoneNumber,
-        email: validation.email,
-        contact_number: contactNumber || null,
-        amount: pricing.sellingPrice,
-        amount_pesewas: pricing.sellingPricePesewas,
-        payment_reference: paymentReference,
-        payment_status: 'pending',
-        fulfillment_status: 'pending',
-        datamart_cost: pricing.datamartCost,
-        markup_percentage: pricing.markup,
-        selling_price: pricing.sellingPrice,
-        paystack_fee: paystackCalc.paystackFee,
-        paystack_amount: paystackCalc.paystackAmount
-    });
+    let order;
+    try {
+        order = await Order.create({
+            reference,
+            network: network,
+            network_code: validation.networkCode,
+            bundle_capacity: bundle.capacity,
+            bundle_capacity_string: bundle.capacity.toString(),
+            bundle_price: pricing.sellingPrice,
+            phone_number: validation.phoneNumber,
+            email: validation.email,
+            contact_number: contactNumber || null,
+            amount: pricing.sellingPrice,
+            amount_pesewas: pricing.sellingPricePesewas,
+            payment_reference: paymentReference,
+            payment_status: 'pending',
+            fulfillment_status: 'pending',
+            datamart_cost: pricing.datamartCost,
+            markup_percentage: pricing.markup,
+            selling_price: pricing.sellingPrice,
+            paystack_fee: paystackCalc.paystackFee,
+            paystack_amount: paystackCalc.paystackAmount
+        });
+    } catch (err) {
+        logError(`Database error creating order: ${err.message}`);
+        throw {
+            status: 500,
+            message: 'Unable to create order. Please try again.'
+        };
+    }
 
     logInfo(`Order created: ${reference} for ${network} ${bundle.capacity}GB`);
     logInfo(`  DataMart cost: ${pricing.datamartCost} GHS`);

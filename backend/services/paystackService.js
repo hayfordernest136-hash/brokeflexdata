@@ -18,7 +18,10 @@ async function initializeTransaction(payload) {
         return response.data;
     } catch (err) {
         logError(`Paystack initialize transaction failed: ${err.message}`);
+        logError(`Payload: ${JSON.stringify(payload)}`);
         if (err.response) {
+            logError(`Paystack response status: ${err.response.status}`);
+            logError(`Paystack response data: ${JSON.stringify(err.response.data)}`);
             const error = new Error(err.response.data.message || 'Payment initialization failed');
             error.status = err.response.status;
             error.code = err.response.data.code || null;
